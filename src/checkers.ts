@@ -1,4 +1,5 @@
 import { Ajv } from "ajv";
+import { osvSeverity, type OsvVuln } from "./severity.js";
 import type { CheckResult, Finding, Target } from "./types.js";
 
 type Of<K extends Target["kind"]> = Extract<Target, { kind: K }>;
@@ -41,22 +42,37 @@ export function checkOsv(t: Of<"package">): Promise<CheckResult> {
   return timed(
     { id: "osv.vulnerabilities", kind: "deterministic", source: { name: "OSV.dev", url: "https://osv.dev" } },
     async () => {
-      const res = await fetch("https://api.osv.dev/v1/query", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ package: { name: t.name, ecosystem: t.ecosystem }, version: t.version }),
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!res.ok) throw new Error(`OSV responded ${res.status}`);
-      const body = (await res.json()) as { vulns?: { id: string; summary?: string }[] };
-      const vulns = body.vulns ?? [];
+      const vulns: OsvVuln[] = [];
+      let pageToken: string | undefined;
+      for (let page = 0; ; page++) {
+        // Fail closed rather than report a partial list as complete.
+        if (page === 10) throw new Error("OSV returned more than 10 pages of results");
+        const res = await fetch("https://api.osv.dev/v1/query", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            package: { name: t.name, ecosystem: t.ecosystem },
+            version: t.version,
+            ...(pageToken ? { page_token: pageToken } : {}),
+          }),
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (!res.ok) throw new Error(`OSV responded ${res.status}`);
+        const body = (await res.json()) as { vulns?: OsvVuln[]; next_page_token?: string };
+        vulns.push(...(body.vulns ?? []));
+        pageToken = body.next_page_token;
+        if (!pageToken) break;
+      }
       return {
         status: vulns.length ? "fail" : "pass",
-        findings: vulns.map((v) => ({
-          severity: "high" as const, // OSV severity parsing (CVSS) left as an exercise
-          message: v.summary ?? "Known vulnerability",
-          ref: v.id,
-        })),
+        findings: vulns.map((v) => {
+          const severity = osvSeverity(v);
+          return {
+            severity: severity ?? "high",
+            message: (v.summary ?? "Known vulnerability") + (severity ? "" : " (severity not provided; assumed high)"),
+            ref: v.id,
+          };
+        }),
       };
     },
   );

@@ -70,19 +70,47 @@ test("checkOsv: no advisories -> pass, and queries the right package", async () 
   });
 });
 
-test("checkOsv: advisories -> fail with one finding per vuln", async () => {
+test("checkOsv: advisories -> fail, severity parsed, unrated ones assumed high and labelled", async () => {
   mockFetch(async () =>
-    Response.json({ vulns: [{ id: "GHSA-1", summary: "Prototype pollution" }, { id: "GHSA-2" }] }),
+    Response.json({
+      vulns: [
+        { id: "GHSA-1", summary: "Prototype pollution", database_specific: { severity: "MODERATE" } },
+        { id: "GHSA-2", severity: [{ type: "CVSS_V3", score: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H" }] },
+        { id: "GHSA-3" },
+      ],
+    }),
   );
   const r = await checkOsv(pkg);
   assert.equal(r.status, "fail");
   assert.deepEqual(
-    r.findings.map((f) => [f.ref, f.message]),
+    r.findings.map((f) => [f.ref, f.severity, f.message]),
     [
-      ["GHSA-1", "Prototype pollution"],
-      ["GHSA-2", "Known vulnerability"],
+      ["GHSA-1", "medium", "Prototype pollution"],
+      ["GHSA-2", "critical", "Known vulnerability"],
+      ["GHSA-3", "high", "Known vulnerability (severity not provided; assumed high)"],
     ],
   );
+});
+
+test("checkOsv: follows next_page_token", async () => {
+  const f = mockFetch(async (_url, init) =>
+    JSON.parse(String(init?.body)).page_token === "p2"
+      ? Response.json({ vulns: [{ id: "B" }] })
+      : Response.json({ vulns: [{ id: "A" }], next_page_token: "p2" }),
+  );
+  const r = await checkOsv(pkg);
+  assert.equal(f.mock.callCount(), 2);
+  assert.deepEqual(
+    r.findings.map((x) => x.ref),
+    ["A", "B"],
+  );
+});
+
+test("checkOsv: endless pagination -> error, never a partial pass or fail", async () => {
+  mockFetch(async () => Response.json({ vulns: [], next_page_token: "again" }));
+  const r = await checkOsv(pkg);
+  assert.equal(r.status, "error");
+  assert.match(r.reason ?? "", /more than 10 pages/);
 });
 
 test("checkOsv: HTTP error -> error with reason", async () => {
