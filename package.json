@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "test": "tsc && node --test \"dist/**/*.test.js\""
   },
   "keywords": [],
   "author": "",
