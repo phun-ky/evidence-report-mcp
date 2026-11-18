@@ -312,7 +312,8 @@ test('checkC2pa: Invalid (tampered) -> fail with one finding per status code', a
           code: 'assertion.dataHash.mismatch',
           url: 'self#jumbf=/c2pa/x/c2pa.assertions/c2pa.hash.data',
           explanation: 'asset hash error'
-        }
+        },
+        { code: 'claimSignature.missing' }
       ]
     })
   );
@@ -324,9 +325,11 @@ test('checkC2pa: Invalid (tampered) -> fail with one finding per status code', a
     r.findings.map((f) => [f.severity, f.message.split(':')[0]]),
     [
       ['medium', 'signingCredential.untrusted'],
-      ['high', 'assertion.dataHash.mismatch']
+      ['high', 'assertion.dataHash.mismatch'],
+      ['high', 'claimSignature.missing']
     ]
   );
+  assert.equal(r.findings[2]!.message, 'claimSignature.missing');
 });
 
 test('checkC2pa: Valid but untrusted signer -> skipped, never pass', async () => {
