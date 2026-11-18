@@ -24,10 +24,15 @@ updates:
           - minor
           - patch
     ignore:
-      # CI runs Node 24; types for a newer Node would allow APIs it lacks
+      # Types for a newer Node would allow APIs that older supported Node
+      # versions lack, so @types/node moves to a new major only by hand
       - dependency-name: '@types/node'
+        update-types:
+          - 'version-update:semver-major'
+      # TypeScript 7 waits until TypeDoc supports it (issue 30)
+      - dependency-name: typescript
         versions:
-          - '>=25'
+          - '>=7'
 
   - package-ecosystem: github-actions
     directory: /
