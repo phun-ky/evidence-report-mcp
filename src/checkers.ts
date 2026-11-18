@@ -1,4 +1,4 @@
-import { Ajv } from "ajv";
+import { Ajv, type SchemaValidateFunction } from "ajv";
 import { osvSeverity, type OsvVuln } from "./severity.js";
 import type { CheckResult, Finding, Target } from "./types.js";
 
@@ -80,25 +80,62 @@ export function checkOsv(t: Of<"package">): Promise<CheckResult> {
 
 /* ---------------- dataset: contract conformance (JSON Schema) ---------------- */
 
-const ajv = new Ajv({ allErrors: true, strict: false });
+// strictSchema: unknown or misspelled keywords make the check error instead of silently passing.
+const ajv = new Ajv({ allErrors: true, strictSchema: true, strictTypes: false, strictTuples: false });
+
+/** "N·s", "N*s" and "N s" are the same unit. Case matters: mN is not MN. */
+// shortcut: separator normalisation only, no aliases ("newton-second") or conversion; add a unit table if agents need it.
+const canonicalUnit = (u: string) => u.trim().replace(/\s*[·⋅*\s]\s*/g, "*");
+
+/**
+ * `"x-unit": "N*s"` requires the value to be `{ value: number, unit: "N*s" }`.
+ * A bare number has no unit to check, so it fails too (Mars Climate Orbiter: lbf·s sent where N·s was expected).
+ */
+const xUnit: SchemaValidateFunction = (expected: string, data: unknown) => {
+  const d = data as { value?: unknown; unit?: unknown } | null;
+  const message =
+    typeof d !== "object" || d === null || typeof d.value !== "number" || typeof d.unit !== "string"
+      ? `has no declared unit (expected { value: number, unit: "${expected}" })`
+      : canonicalUnit(d.unit) !== canonicalUnit(expected)
+        ? `unit "${d.unit}" does not match required "${expected}"`
+        : undefined;
+  xUnit.errors = message ? [{ keyword: "x-unit", message, params: { unit: expected } }] : [];
+  return message === undefined;
+};
+ajv.addKeyword({ keyword: "x-unit", schemaType: "string", errors: true, validate: xUnit });
+
+/** Strict mode still allows "x-*" extension keys: register each unknown one as a no-op annotation. */
+function allowExtensions(schema: unknown): void {
+  if (typeof schema !== "object" || schema === null) return;
+  for (const [k, v] of Object.entries(schema)) {
+    if (k.startsWith("x-") && !ajv.getKeyword(k)) ajv.addKeyword(k);
+    allowExtensions(v);
+  }
+}
 
 export function checkSchema(t: Of<"dataset">): Promise<CheckResult> {
   return timed(
     { id: "schema.conformance", kind: "deterministic", source: { name: "JSON Schema (ajv)" } },
     async () => {
+      allowExtensions(t.schema);
       const validate = ajv.compile(t.schema);
       const findings: Finding[] = [];
-      t.records.forEach((rec, i) => {
-        if (!validate(rec)) {
-          for (const e of validate.errors ?? []) {
-            findings.push({
-              severity: "medium",
-              message: `record ${i}: ${e.instancePath || "/"} ${e.message ?? "invalid"}`,
-              ref: `/${i}${e.instancePath}`,
-            });
+      try {
+        t.records.forEach((rec, i) => {
+          if (!validate(rec)) {
+            for (const e of validate.errors ?? []) {
+              findings.push({
+                severity: e.keyword === "x-unit" ? "high" : "medium",
+                message: `record ${i}: ${e.instancePath || "/"} ${e.message ?? "invalid"}`,
+                ref: `/${i}${e.instancePath}`,
+              });
+            }
           }
-        }
-      });
+        });
+      } finally {
+        // Ajv caches every compiled schema: without this the cache grows per call and a repeated $id throws.
+        ajv.removeSchema(t.schema);
+      }
       return { status: findings.length ? "fail" : "pass", findings };
     },
   );

@@ -25,23 +25,24 @@ const pkg = { kind: "package", ecosystem: "npm", name: "lodash", version: "4.17.
 
 /* ---------------- schema ---------------- */
 
+const dataset = (schema: Record<string, unknown>, records: unknown[]) =>
+  checkSchema({ kind: "dataset", schema, records });
+
 test("checkSchema: conforming records -> pass", async () => {
-  const r = await checkSchema({
-    kind: "dataset",
-    schema: { type: "object", properties: { n: { type: "number" } }, required: ["n"] },
-    records: [{ n: 1 }, { n: 2 }],
-  });
+  const r = await dataset(
+    { type: "object", properties: { n: { type: "number" } }, required: ["n"] },
+    [{ n: 1 }, { n: 2 }],
+  );
   assert.equal(r.status, "pass");
   assert.equal(r.kind, "deterministic");
   assert.deepEqual(r.findings, []);
 });
 
 test("checkSchema: violations -> fail with one finding per error, pointing at the record", async () => {
-  const r = await checkSchema({
-    kind: "dataset",
-    schema: { type: "object", properties: { n: { type: "number" } }, required: ["n"] },
-    records: [{ n: 1 }, { n: "one" }, {}],
-  });
+  const r = await dataset(
+    { type: "object", properties: { n: { type: "number" } }, required: ["n"] },
+    [{ n: 1 }, { n: "one" }, {}],
+  );
   assert.equal(r.status, "fail");
   assert.deepEqual(
     r.findings.map((f) => f.ref),
@@ -50,10 +51,61 @@ test("checkSchema: violations -> fail with one finding per error, pointing at th
 });
 
 test("checkSchema: invalid schema -> error, not crash or pass", async () => {
-  const r = await checkSchema({ kind: "dataset", schema: { type: "not-a-type" }, records: [{}] });
+  const r = await dataset({ type: "not-a-type" }, [{}]);
   assert.equal(r.status, "error");
   assert.ok(r.reason);
   assert.deepEqual(r.findings, []);
+});
+
+test("checkSchema: misspelled keyword -> error (strict), not a silent pass", async () => {
+  const r = await dataset({ type: "object", requird: ["n"] }, [{}]);
+  assert.equal(r.status, "error");
+  assert.match(r.reason ?? "", /requird/);
+});
+
+test("checkSchema: x-* extension keys are allowed as annotations", async () => {
+  const r = await dataset({ type: "object", "x-owner": "team-a", properties: { n: { "x-note": 1 } } }, [{ n: 1 }]);
+  assert.equal(r.status, "pass");
+});
+
+test("checkSchema: the same $id can be checked twice", async () => {
+  const schema = { $id: "https://example.test/s", type: "object" };
+  assert.equal((await dataset(schema, [{}])).status, "pass");
+  assert.equal((await dataset(schema, [{}])).status, "pass");
+});
+
+/* ---------------- x-unit ---------------- */
+
+const impulse = { type: "object", properties: { impulse: { "x-unit": "N*s" } } };
+
+test("x-unit: matching unit passes, with separator spelling normalised", async () => {
+  const r = await dataset(impulse, [
+    { impulse: { value: 4.45, unit: "N*s" } },
+    { impulse: { value: 4.45, unit: "N·s" } },
+    { impulse: { value: 4.45, unit: "N s" } },
+  ]);
+  assert.equal(r.status, "pass");
+});
+
+test("x-unit: Mars Climate Orbiter (lbf·s where N·s is required) -> high finding", async () => {
+  const r = await dataset(impulse, [{ impulse: { value: 1, unit: "lbf·s" } }]);
+  assert.equal(r.status, "fail");
+  assert.equal(r.findings.length, 1);
+  assert.equal(r.findings[0]!.severity, "high");
+  assert.equal(r.findings[0]!.ref, "/0/impulse");
+  assert.match(r.findings[0]!.message, /"lbf·s" does not match required "N\*s"/);
+});
+
+test("x-unit: bare number or missing unit -> fail, unit can't be checked", async () => {
+  const r = await dataset(impulse, [{ impulse: 4.45 }, { impulse: { value: 4.45 } }]);
+  assert.equal(r.status, "fail");
+  assert.equal(r.findings.length, 2);
+  for (const f of r.findings) assert.match(f.message, /no declared unit/);
+});
+
+test("x-unit: units are case-sensitive (mN is not MN)", async () => {
+  const r = await dataset({ properties: { f: { "x-unit": "mN" } } }, [{ f: { value: 1, unit: "MN" } }]);
+  assert.equal(r.status, "fail");
 });
 
 /* ---------------- OSV (fetch mocked) ---------------- */
