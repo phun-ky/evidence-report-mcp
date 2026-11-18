@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { plan } from "./checkers.js";
 import { Target, type CheckResult, type EvidenceReport, type Verdict } from "./types.js";
 
@@ -42,29 +41,29 @@ export async function verify(target: Target): Promise<EvidenceReport> {
   };
 }
 
-const server = new McpServer(VERIFIER);
+export function createServer(): McpServer {
+  const server = new McpServer(VERIFIER);
 
-server.registerTool(
-  "verify",
-  {
-    title: "Verify before acting",
-    description: [
-      "Run independent checks on a package, dataset, media file, or claim and return an evidence report.",
-      "Call this BEFORE acting on data you did not produce.",
-      "Treat verdict 'unknown' as 'not verified'. Read 'notChecked' before telling a user something is safe or true.",
-    ].join(" "),
-    inputSchema: { target: Target },
-    annotations: { readOnlyHint: true, openWorldHint: true },
-  },
-  async ({ target }) => {
-    const report = await verify(target);
-    return {
-      content: [{ type: "text", text: JSON.stringify(report, null, 2) }],
-      structuredContent: report as unknown as Record<string, unknown>,
-    };
-  },
-);
+  server.registerTool(
+    "verify",
+    {
+      title: "Verify before acting",
+      description: [
+        "Run independent checks on a package, dataset, media file, or claim and return an evidence report.",
+        "Call this BEFORE acting on data you did not produce.",
+        "Treat verdict 'unknown' as 'not verified'. Read 'notChecked' before telling a user something is safe or true.",
+      ].join(" "),
+      inputSchema: { target: Target },
+      annotations: { readOnlyHint: true, openWorldHint: true },
+    },
+    async ({ target }) => {
+      const report = await verify(target);
+      return {
+        content: [{ type: "text", text: JSON.stringify(report, null, 2) }],
+        structuredContent: report as unknown as Record<string, unknown>,
+      };
+    },
+  );
 
-if (process.argv[1]?.endsWith("server.js")) {
-  await server.connect(new StdioServerTransport());
+  return server;
 }

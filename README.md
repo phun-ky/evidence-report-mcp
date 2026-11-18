@@ -11,7 +11,7 @@ Companion to the talk *Invisible Data: Building Trust in the Age of AI*.
 ```sh
 npm install
 npm run build
-claude mcp add verify -- node /path/to/verify-mcp/dist/server.js
+claude mcp add verify -- node /path/to/verify-mcp/dist/cli.js
 ```
 
 ## The tool

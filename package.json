@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/cli.js"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +20,6 @@
   },
   "type": "module",
   "bin": {
-    "verify-mcp": "dist/server.js"
+    "verify-mcp": "dist/cli.js"
   }
 }
