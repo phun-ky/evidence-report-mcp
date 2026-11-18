@@ -55,12 +55,31 @@ jobs:
       - name: Build
         run: npm run build
 
+  # The oldest Node in engines. Lint is left out: ESLint 10 needs 22.13.0 or
+  # later, and lint only runs in development.
+  test-oldest-node:
+    name: Test and build on Node 22.12.0
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.12.0
+          cache: npm
+      - run: npm ci
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+
   # The one required check: fails when any job above failed, was cancelled or
   # was skipped, so adding a job never needs a ruleset change.
   check:
     name: check
     if: ${{ !cancelled() }}
-    needs: [test]
+    needs: [test, test-oldest-node]
     runs-on: ubuntu-24.04
     steps:
       - name: Fail unless every job succeeded

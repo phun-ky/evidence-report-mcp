@@ -237,7 +237,7 @@ interface C2paStatus {
 }
 
 /**
- * Runs c2patool (from c2pa-rs) read-only. VERIFY_MCP_C2PATOOL is the binary's path. Trust
+ * Runs c2patool (from c2pa-rs) read-only. EVIDENCE_REPORT_MCP_C2PATOOL is the binary's path. Trust
  * anchors come from c2patool's own env (C2PATOOL_TRUST_ANCHORS, C2PATOOL_TRUST_CONFIG,
  * C2PATOOL_ALLOWED_LIST), which it only reads under the `trust` subcommand.
  *
@@ -246,7 +246,7 @@ interface C2paStatus {
  * signed it, so both stay "skipped" and keep the verdict "unknown".
  */
 export function checkC2pa(t: Of<'file'>): Promise<CheckResult> {
-  const tool = process.env.VERIFY_MCP_C2PATOOL;
+  const tool = process.env.EVIDENCE_REPORT_MCP_C2PATOOL;
 
   return timed(
     {
@@ -258,7 +258,8 @@ export function checkC2pa(t: Of<'file'>): Promise<CheckResult> {
       if (!tool)
         return {
           status: 'skipped',
-          reason: 'C2PA validator not configured (set VERIFY_MCP_C2PATOOL)'
+          reason:
+            'C2PA validator not configured (set EVIDENCE_REPORT_MCP_C2PATOOL)'
         };
 
       let stdout: string;

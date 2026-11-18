@@ -70,9 +70,9 @@ What you can rely on:
   check that errors or is skipped makes the verdict `unknown`, never `pass`.
   Heuristic checks can fail a target but can never make it pass.
 - **No shell.** `c2patool` is started directly, without a shell, from the path
-  in `VERIFY_MCP_C2PATOOL`. The file path is passed as an absolute path, so it
-  is never read as an option, and the run has a 30 second timeout and a 16 MiB
-  output limit.
+  in `EVIDENCE_REPORT_MCP_C2PATOOL`. The file path is passed as an absolute
+  path, so it is never read as an option, and the run has a 30 second timeout
+  and a 16 MiB output limit.
 - **No `eval` in the server's own code.** The only generated code is Ajv's: Ajv
   compiles each JSON Schema into a JavaScript validation function, which is how
   Ajv works.
