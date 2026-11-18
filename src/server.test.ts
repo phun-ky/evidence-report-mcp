@@ -54,6 +54,7 @@ test("verify: report always carries non-empty notChecked and sourced checks", as
   // schema passes, observability is a stub that skips -> fail closed
   assert.equal(report.verdict, "unknown");
   assert.ok(report.notChecked.length > 0);
+  assert.equal(report.verifier.name, "verify-mcp");
   for (const c of report.checks) {
     assert.ok(c.source.name);
     assert.ok(!Number.isNaN(Date.parse(c.source.retrievedAt)));

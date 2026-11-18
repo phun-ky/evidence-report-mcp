@@ -1,8 +1,13 @@
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { plan } from "./checkers.js";
 import { Target, type CheckResult, type EvidenceReport, type Verdict } from "./types.js";
 
-const VERIFIER = { name: "verify-mcp", version: "0.1.0" };
+const { name, version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+  name: string;
+  version: string;
+};
+const VERIFIER = { name, version };
 
 /**
  * Fail closed:
