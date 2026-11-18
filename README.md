@@ -25,9 +25,35 @@ verify({ target })
 | kind      | example input                                   | checks                          |
 | --------- | ----------------------------------------------- | ------------------------------- |
 | `package` | `{ ecosystem: "npm", name, version }`           | OSV.dev advisories              |
-| `dataset` | `{ schema, records, assetId? }`                 | JSON Schema contract, observability adapter |
-| `file`    | `{ path }`                                      | C2PA manifest (adapter stub)    |
+| `dataset` | `{ schema, records, assetId? }`                 | JSON Schema contract (incl. `x-unit`), observability adapter |
+| `file`    | `{ path }`                                      | C2PA manifest (c2patool)        |
 | `claim`   | `{ text, sources: [url, …] }`                   | independent-source corroboration (heuristic) |
+
+### Units: `x-unit`
+
+A property with `"x-unit": "N*s"` must be sent as `{ "value": 4.45, "unit": "N*s" }`.
+A different unit (`lbf*s`) or a bare number is a `high` finding. Only separators are
+normalised (`N·s` = `N*s` = `N s`); there are no aliases and no conversion.
+
+Schemas are compiled in Ajv strict mode: an unknown or misspelled keyword makes the
+check `error` instead of silently passing. `x-*` keys are allowed as annotations.
+
+### C2PA: `c2patool`
+
+Install [c2patool](https://github.com/contentauth/c2pa-rs/releases) (tested with
+0.27.23, verify the release checksum) and point the server at it:
+
+```sh
+claude mcp add verify \
+  -e VERIFY_MCP_C2PATOOL=/path/to/c2patool \
+  -e C2PATOOL_TRUST_ANCHORS=/path/to/anchors.pem \
+  -- node /path/to/verify-mcp/dist/cli.js
+```
+
+`C2PATOOL_TRUST_ANCHORS`, `C2PATOOL_TRUST_CONFIG` and `C2PATOOL_ALLOWED_LIST` are
+c2patool's own settings. Only a `Trusted` manifest passes; `Invalid` fails; a
+manifest from an untrusted signer, or no manifest at all, is `skipped`, so the
+verdict stays `unknown`.
 
 ## The report
 
@@ -59,16 +85,11 @@ verify({ target })
 
 - `checkObservability`: wire to Monte Carlo, Soda, Elementary, etc. (their
   API, or act as an MCP client to their MCP server).
-- `checkC2pa`: wire to a C2PA validator such as `c2pa-node`. A missing
-  manifest should stay non-failing; absence of credentials proves nothing.
 - `checkCorroboration`: fetches nothing yet; only enforces two distinct
   source domains.
-- OSV severity is hard-coded to `high`; parse CVSS for real use.
 
 ## Ideas for v0.2
 
 - `verify` over a lockfile or SBOM (OSV batch API).
-- Unit-aware schema keywords (`"x-unit": "N·s"`) to catch Mars Climate
-  Orbiter–class mismatches.
 - A signed report (Sigstore) so downstream systems can trust the verifier's
   output, not just the agent's summary of it.
