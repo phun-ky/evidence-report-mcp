@@ -1,0 +1,44 @@
+# Weekly updates. Minor and patch versions are grouped into one PR, because
+# they should not break anything and one PR is easier to review than many;
+# each major version gets its own PR, so one blocked major never holds back
+# the others.
+#
+# cooldown: only propose versions published at least 14 days ago. A
+# compromised release is usually caught and pulled within days. Security
+# updates are not delayed by it.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    allow:
+      - dependency-type: direct
+    labels:
+      - 'mindless: 📦 dependencies'
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # CI runs Node 24; types for a newer Node would allow APIs it lacks
+      - dependency-name: '@types/node'
+        versions:
+          - '>=25'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    labels:
+      - 'mindless: 📦 dependencies'
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
