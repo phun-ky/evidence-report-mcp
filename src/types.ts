@@ -14,7 +14,7 @@ export const PackageTarget = z.object({
 export const DatasetTarget = z.object({
   kind: z.literal("dataset"),
   /** Inline JSON Schema the data must satisfy (the "contract"). */
-  schema: z.record(z.unknown()),
+  schema: z.record(z.string(), z.unknown()),
   /** Records to validate. Keep samples small; this is not a warehouse scan. */
   records: z.array(z.unknown()).min(1).max(1000),
   /** Optional asset id in an observability tool (freshness, volume, lineage). */
