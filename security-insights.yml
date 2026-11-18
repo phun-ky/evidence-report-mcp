@@ -1,0 +1,111 @@
+header:
+  schema-version: 2.2.0
+  last-updated: '2026-11-18'
+  last-reviewed: '2026-11-18'
+  url: https://raw.githubusercontent.com/phun-ky/evidence-report-mcp/main/security-insights.yml
+  comment: |
+    Security information for evidence-report-mcp, in the OpenSSF Security
+    Insights format. Keep it in step with SECURITY.md.
+
+project:
+  name: evidence-report-mcp
+  homepage: https://github.com/phun-ky/evidence-report-mcp
+  funding: https://github.com/sponsors/phun-ky
+  administrators:
+    - name: Alexander Vassbotn Røyne-Helgesen
+      social: https://github.com/phun-ky
+      primary: true
+  documentation:
+    quickstart-guide: https://github.com/phun-ky/evidence-report-mcp#readme
+    support-policy: https://github.com/phun-ky/evidence-report-mcp/blob/main/SECURITY.md#supported-versions
+  repositories:
+    - name: evidence-report-mcp
+      url: https://github.com/phun-ky/evidence-report-mcp
+      comment: |
+        The MCP server and its one tool, verify, which returns an
+        EvidenceReport.
+  vulnerability-reporting:
+    reports-accepted: true
+    bug-bounty-available: false
+    policy: https://github.com/phun-ky/evidence-report-mcp/blob/main/SECURITY.md
+    comment: |
+      Report privately with GitHub's private vulnerability reporting
+      (https://github.com/phun-ky/evidence-report-mcp/security/advisories/new)
+      or by email to the contact below.
+    contact:
+      name: evidence-report-mcp security contact
+      email: security@phun-ky.net
+      primary: true
+
+repository:
+  url: https://github.com/phun-ky/evidence-report-mcp
+  status: WIP
+  accepts-change-request: true
+  accepts-automated-change-request: true
+  no-third-party-packages: false
+  core-team:
+    - name: Alexander Vassbotn Røyne-Helgesen
+      social: https://github.com/phun-ky
+      primary: true
+  documentation:
+    security-policy: https://github.com/phun-ky/evidence-report-mcp/blob/main/SECURITY.md
+    dependency-management-policy: https://github.com/phun-ky/evidence-report-mcp/blob/main/SECURITY.md#dependencies
+  license:
+    url: https://github.com/phun-ky/evidence-report-mcp/blob/main/LICENSE
+    expression: MIT
+  security:
+    assessments:
+      self:
+        comment: |
+          No self-assessment has been published yet. SECURITY.md sets out what
+          the server does and does not do, checked against the code.
+    tools:
+      - name: CodeQL
+        type: SAST
+        rulesets:
+          - default
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results: {}
+        comment: |
+          GitHub default setup, scanning JavaScript/TypeScript and the GitHub
+          Actions workflows on every push to main and every pull request.
+      - name: Dependabot
+        type: SCA
+        rulesets:
+          - default
+        integration:
+          adhoc: true
+          ci: false
+          release: false
+        results: {}
+        comment: |
+          Weekly checks of the npm dependencies and GitHub Actions, with
+          update pull requests, and security updates as advisories appear.
+      - name: Dependency Review
+        type: SCA
+        rulesets:
+          - default
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results: {}
+        comment: |
+          Fails pull requests that add a dependency with a known
+          vulnerability of any severity, except the accepted exceptions
+          listed in SECURITY.md.
+      - name: OpenSSF Scorecard
+        type: other
+        rulesets:
+          - default
+        integration:
+          adhoc: true
+          ci: true
+          release: false
+        results: {}
+        comment: |
+          Runs weekly and on every push to main; results at
+          https://scorecard.dev/viewer/?uri=github.com/phun-ky/evidence-report-mcp
