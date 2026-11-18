@@ -21,6 +21,7 @@ test('cvss3BaseScore: CVSS 4, CVSS 2 and malformed vectors -> undefined', () => 
     'AV:N/AC:L/Au:N/C:P/I:P/A:P',
     'CVSS:3.1/AV:X/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
     'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/C:H/I:H/A:H',
+    'CVSS:3.1/S:U',
     ''
   ]) {
     assert.equal(cvss3BaseScore(v), undefined, v);
@@ -62,6 +63,16 @@ test('osvSeverity: label-typed severity entries (e.g. Ubuntu) are read', () => {
   assert.equal(
     osvSeverity({ id: 'U', severity: [{ type: 'Ubuntu', score: 'medium' }] }),
     'medium'
+  );
+});
+
+test('osvSeverity: per-package database_specific severity is read', () => {
+  assert.equal(
+    osvSeverity({
+      id: 'D',
+      affected: [{ database_specific: { severity: 'CRITICAL' } }]
+    }),
+    'critical'
   );
 });
 
