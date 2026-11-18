@@ -1,0 +1,59 @@
+name: Check
+
+# No path filter on pull_request: "check" is the required check, so it must
+# report on every PR or the PR waits for it forever.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Typecheck, test and build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  # The one required check: fails when any job above failed, was cancelled or
+  # was skipped, so adding a job never needs a ruleset change.
+  check:
+    name: check
+    if: ${{ !cancelled() }}
+    needs: [test]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fail unless every job succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          if [ -z "$RESULTS" ]; then
+            echo "No job results to check." >&2
+            exit 1
+          fi
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "A job did not succeed: $result" >&2
+              exit 1
+            fi
+          done
