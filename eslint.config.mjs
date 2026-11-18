@@ -9,6 +9,8 @@ export default defineConfig([
     rules: {
       // Runs only in Node (see engines), never in a browser
       'compat/compat': 'off',
+      // House convention: early returns instead of nested ternaries
+      'no-nested-ternary': 'error',
       // The SDK's "./*" export maps types to "<path>.js.d.ts", which the
       // resolver can't find; Node and tsc resolve these imports fine
       'import-x/no-unresolved': [

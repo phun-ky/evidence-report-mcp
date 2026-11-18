@@ -122,21 +122,30 @@ const ajv = new Ajv({
 /** "N·s", "N*s" and "N s" are the same unit. Case matters: mN is not MN. */
 // shortcut: separator normalisation only, no aliases ("newton-second") or conversion; add a unit table if agents need it.
 const canonicalUnit = (u: string) => u.trim().replace(/\s*[·⋅*\s]\s*/g, '*');
+
 /**
  * `"x-unit": "N*s"` requires the value to be `{ value: number, unit: "N*s" }`.
  * A bare number has no unit to check, so it fails too (Mars Climate Orbiter: lbf·s sent where N·s was expected).
  */
-const xUnit: SchemaValidateFunction = (expected: string, data: unknown) => {
+function unitError(expected: string, data: unknown): string | undefined {
   const d = data as { value?: unknown; unit?: unknown } | null;
-  const message =
+
+  if (
     typeof d !== 'object' ||
     d === null ||
     typeof d.value !== 'number' ||
     typeof d.unit !== 'string'
-      ? `has no declared unit (expected { value: number, unit: "${expected}" })`
-      : canonicalUnit(d.unit) !== canonicalUnit(expected)
-        ? `unit "${d.unit}" does not match required "${expected}"`
-        : undefined;
+  )
+    return `has no declared unit (expected { value: number, unit: "${expected}" })`;
+
+  if (canonicalUnit(d.unit) !== canonicalUnit(expected))
+    return `unit "${d.unit}" does not match required "${expected}"`;
+
+  return undefined;
+}
+
+const xUnit: SchemaValidateFunction = (expected: string, data: unknown) => {
+  const message = unitError(expected, data);
 
   xUnit.errors = message
     ? [{ keyword: 'x-unit', message, params: { unit: expected } }]
