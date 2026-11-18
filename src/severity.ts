@@ -19,16 +19,17 @@ const fromLabel = (label: unknown): Severity | undefined =>
   typeof label === 'string' ? LABELS[label.toLowerCase()] : undefined;
 
 /** CVSS qualitative rating scale. */
-export const fromScore = (score: number): Severity =>
-  score === 0
-    ? 'info'
-    : score < 4
-      ? 'low'
-      : score < 7
-        ? 'medium'
-        : score < 9
-          ? 'high'
-          : 'critical';
+export function fromScore(score: number): Severity {
+  if (score === 0) return 'info';
+
+  if (score < 4) return 'low';
+
+  if (score < 7) return 'medium';
+
+  if (score < 9) return 'high';
+
+  return 'critical';
+}
 
 type Weights = Record<string, number | undefined>;
 
