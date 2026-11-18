@@ -289,7 +289,7 @@ export function checkC2pa(t: Of<'file'>): Promise<CheckResult> {
       };
       const findings: Finding[] = (report.validation_status ?? []).map((s) => ({
         severity: s.code === 'signingCredential.untrusted' ? 'medium' : 'high',
-        message: `${s.code}: ${s.explanation ?? ''}`.trim(),
+        message: s.explanation ? `${s.code}: ${s.explanation}` : s.code,
         ref: s.url
       }));
 

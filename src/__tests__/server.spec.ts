@@ -1,7 +1,10 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { aggregate, verify } from '../server.js';
+import { aggregate, createServer, verify } from '../server.js';
 import type { CheckKind, CheckResult, CheckStatus } from '../types.js';
 
 const check = (
@@ -79,5 +82,42 @@ test('verify: report always carries non-empty notChecked and sourced checks', as
   for (const c of report.checks) {
     assert.ok(c.source.name);
     assert.ok(!Number.isNaN(Date.parse(c.source.retrievedAt)));
+  }
+});
+
+test('createServer: lists verify as a read-only tool and returns the report as text and structured content', async () => {
+  const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
+  const server = createServer();
+  const client = new Client({ name: 'test', version: '0.0.0' });
+
+  await server.connect(serverSide);
+  await client.connect(clientSide);
+
+  try {
+    const { tools } = await client.listTools();
+
+    assert.deepEqual(
+      tools.map((t) => [t.name, t.annotations?.readOnlyHint]),
+      [['verify', true]]
+    );
+
+    // One source domain: the corroboration check fails without any network call
+    const result = await client.callTool({
+      name: 'verify',
+      arguments: {
+        target: { kind: 'claim', text: 'x', sources: ['https://a.example'] }
+      }
+    });
+    const [content] = result.content as { type: string; text: string }[];
+
+    assert.equal(content!.type, 'text');
+    assert.deepEqual(JSON.parse(content!.text), result.structuredContent);
+    assert.equal(
+      (result.structuredContent as { verdict: string }).verdict,
+      'fail'
+    );
+  } finally {
+    await client.close();
+    await server.close();
   }
 });
