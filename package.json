@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "description": "",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/cli.js",
-    "test": "tsc && node --test \"dist/**/*.test.js\"",
-    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test --enable-source-maps 'src/**/__tests__/**/*.spec.ts'",
+    "typecheck": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -25,6 +25,7 @@
     "eslint": "10.15.0",
     "eslint-config-phun-ky": "3.0.0",
     "prettier": "3.9.10",
+    "tsx": "4.23.15",
     "typescript": "6.0.3"
   },
   "type": "module",

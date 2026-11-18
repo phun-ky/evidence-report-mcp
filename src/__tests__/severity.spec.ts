@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { cvss3BaseScore, fromScore, osvSeverity } from './severity.js';
+import { cvss3BaseScore, fromScore, osvSeverity } from '../severity.js';
 
 test('cvss3BaseScore: known vectors match the FIRST calculator', () => {
   const cases: [string, number][] = [

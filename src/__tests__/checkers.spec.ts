@@ -11,8 +11,8 @@ import {
   checkOsv,
   checkSchema,
   plan
-} from './checkers.js';
-import type { Target } from './types.js';
+} from '../checkers.js';
+import type { Target } from '../types.js';
 
 // No network in tests: any fetch not explicitly mocked fails the test loudly.
 beforeEach(() => {

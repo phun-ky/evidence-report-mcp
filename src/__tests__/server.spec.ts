@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { aggregate, verify } from './server.js';
-import type { CheckKind, CheckResult, CheckStatus } from './types.js';
+import { aggregate, verify } from '../server.js';
+import type { CheckKind, CheckResult, CheckStatus } from '../types.js';
 
 const check = (
   id: string,
