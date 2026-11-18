@@ -1,6 +1,11 @@
 import { Ajv, type SchemaValidateFunction } from "ajv";
+import { execFile } from "node:child_process";
+import { resolve } from "node:path";
+import { promisify } from "node:util";
 import { osvSeverity, type OsvVuln } from "./severity.js";
 import type { CheckResult, Finding, Target } from "./types.js";
+
+const execFileP = promisify(execFile);
 
 type Of<K extends Target["kind"]> = Extract<Target, { kind: K }>;
 
@@ -160,15 +165,61 @@ export function checkObservability(t: Of<"dataset">): Promise<CheckResult> {
 
 /* ---------------- file: content provenance (C2PA) ---------------- */
 
+interface C2paStatus {
+  code: string;
+  url?: string;
+  explanation?: string;
+}
+
 /**
- * Adapter point for a C2PA validator (e.g. the Content Authenticity
- * Initiative's c2pa-node / c2pa-rs). A missing manifest is NOT a fail:
- * absence of credentials proves nothing either way.
+ * Runs c2patool (from c2pa-rs) read-only. VERIFY_MCP_C2PATOOL is the binary's path. Trust
+ * anchors come from c2patool's own env (C2PATOOL_TRUST_ANCHORS, C2PATOOL_TRUST_CONFIG,
+ * C2PATOOL_ALLOWED_LIST), which it only reads under the `trust` subcommand.
+ *
+ * Only a trusted signer passes. A missing manifest is NOT a fail (absence of credentials
+ * proves nothing) and a valid manifest from an untrusted signer proves only that someone
+ * signed it, so both stay "skipped" and keep the verdict "unknown".
  */
-export function checkC2pa(_t: Of<"file">): Promise<CheckResult> {
+export function checkC2pa(t: Of<"file">): Promise<CheckResult> {
+  const tool = process.env.VERIFY_MCP_C2PATOOL;
   return timed(
-    { id: "c2pa.manifest", kind: "deterministic", source: { name: "C2PA validator" } },
-    async () => ({ status: "skipped", reason: "C2PA validator not configured" }),
+    { id: "c2pa.manifest", kind: "deterministic", source: { name: tool ? "c2patool" : "C2PA validator" } },
+    async () => {
+      if (!tool) return { status: "skipped", reason: "C2PA validator not configured (set VERIFY_MCP_C2PATOOL)" };
+      let stdout: string;
+      try {
+        // Absolute path, so a target like "-o/x" can never be parsed as a c2patool flag.
+        ({ stdout } = await execFileP(tool, [resolve(t.path), "trust"], {
+          timeout: 30_000,
+          maxBuffer: 16 * 1024 * 1024,
+        }));
+      } catch (err) {
+        if (/No claim found/.test(String((err as { stderr?: unknown }).stderr))) {
+          return { status: "skipped", reason: "No C2PA manifest found; absence of credentials proves nothing" };
+        }
+        throw err;
+      }
+      const report = JSON.parse(stdout) as { validation_state?: string; validation_status?: C2paStatus[] };
+      const findings: Finding[] = (report.validation_status ?? []).map((s) => ({
+        severity: s.code === "signingCredential.untrusted" ? "medium" : "high",
+        message: `${s.code}: ${s.explanation ?? ""}`.trim(),
+        ref: s.url,
+      }));
+      switch (report.validation_state) {
+        case "Trusted":
+          return { status: "pass", findings };
+        case "Invalid":
+          return { status: "fail", findings };
+        case "Valid":
+          return {
+            status: "skipped",
+            reason: "Manifest is intact but its signer is not trusted (configure C2PATOOL_TRUST_ANCHORS)",
+            findings,
+          };
+        default:
+          throw new Error(`Unexpected c2patool validation_state: ${String(report.validation_state)}`);
+      }
+    },
   );
 }
 
@@ -235,6 +286,8 @@ export function plan(t: Target): Plan {
         notChecked: [
           "Whether the depicted content is true or in context",
           "Files whose credentials were stripped in transit",
+          "Signers outside the configured trust anchors",
+          "Ingredient manifests (earlier edits), only the active manifest",
         ],
       };
     case "claim":

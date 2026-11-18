@@ -1,5 +1,8 @@
-import { afterEach, beforeEach, mock, test } from "node:test";
+import { after, afterEach, before, beforeEach, mock, test } from "node:test";
 import assert from "node:assert/strict";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   checkC2pa,
   checkCorroboration,
@@ -187,13 +190,94 @@ test("checkOsv: malformed JSON -> error", async () => {
   assert.equal((await checkOsv(pkg)).status, "error");
 });
 
+/* ---------------- C2PA (fake c2patool, shapes taken from c2patool 0.27.23) ---------------- */
+
+let dir: string;
+before(async () => {
+  dir = await mkdtemp(join(tmpdir(), "verify-mcp-c2pa-"));
+});
+after(() => rm(dir, { recursive: true, force: true }));
+afterEach(() => {
+  delete process.env.VERIFY_MCP_C2PATOOL;
+});
+
+/** Installs a fake c2patool that records its argv and runs `body`. */
+async function fakeC2patool(body: string): Promise<void> {
+  const path = join(dir, "c2patool");
+  await writeFile(path, `#!/bin/sh\nprintf '%s\\n' "$@" > "${dir}/args"\n${body}\n`, { mode: 0o755 });
+  process.env.VERIFY_MCP_C2PATOOL = path;
+}
+const printJson = (j: unknown) => `cat <<'EOF'\n${JSON.stringify(j)}\nEOF`;
+const untrusted = { code: "signingCredential.untrusted", url: "self#jumbf=/c2pa/x/c2pa.signature", explanation: "signing certificate untrusted" };
+
+test("checkC2pa: not configured -> skipped", async () => {
+  const r = await checkC2pa({ kind: "file", path: "/tmp/x.jpg" });
+  assert.equal(r.status, "skipped");
+  assert.match(r.reason ?? "", /VERIFY_MCP_C2PATOOL/);
+});
+
+test("checkC2pa: Trusted -> pass; runs read-only with an absolute path and the trust subcommand", async () => {
+  await fakeC2patool(printJson({ validation_state: "Trusted", validation_status: [] }));
+  const r = await checkC2pa({ kind: "file", path: "-o/evil.jpg" });
+  assert.equal(r.status, "pass");
+  assert.equal(r.source.name, "c2patool");
+  const args = (await readFile(join(dir, "args"), "utf8")).trim().split("\n");
+  assert.equal(args.length, 2);
+  assert.ok(args[0]!.startsWith("/"), args[0]);
+  assert.equal(args[1], "trust");
+});
+
+test("checkC2pa: Invalid (tampered) -> fail with one finding per status code", async () => {
+  await fakeC2patool(
+    printJson({
+      validation_state: "Invalid",
+      validation_status: [
+        untrusted,
+        { code: "assertion.dataHash.mismatch", url: "self#jumbf=/c2pa/x/c2pa.assertions/c2pa.hash.data", explanation: "asset hash error" },
+      ],
+    }),
+  );
+  const r = await checkC2pa({ kind: "file", path: "/tmp/x.jpg" });
+  assert.equal(r.status, "fail");
+  assert.deepEqual(
+    r.findings.map((f) => [f.severity, f.message.split(":")[0]]),
+    [
+      ["medium", "signingCredential.untrusted"],
+      ["high", "assertion.dataHash.mismatch"],
+    ],
+  );
+});
+
+test("checkC2pa: Valid but untrusted signer -> skipped, never pass", async () => {
+  await fakeC2patool(printJson({ validation_state: "Valid", validation_status: [untrusted] }));
+  const r = await checkC2pa({ kind: "file", path: "/tmp/x.jpg" });
+  assert.equal(r.status, "skipped");
+  assert.match(r.reason ?? "", /not trusted/);
+  assert.equal(r.findings.length, 1);
+});
+
+test("checkC2pa: no manifest -> skipped, not fail", async () => {
+  await fakeC2patool(`echo "Error: No claim found" >&2; exit 1`);
+  const r = await checkC2pa({ kind: "file", path: "/tmp/x.jpg" });
+  assert.equal(r.status, "skipped");
+  assert.match(r.reason ?? "", /No C2PA manifest/);
+});
+
+test("checkC2pa: tool crash, unknown state, or a missing binary -> error", async () => {
+  await fakeC2patool(`echo "Error: file not found" >&2; exit 1`);
+  assert.equal((await checkC2pa({ kind: "file", path: "/tmp/x.jpg" })).status, "error");
+  await fakeC2patool(printJson({ validation_state: "Wellformed" }));
+  assert.equal((await checkC2pa({ kind: "file", path: "/tmp/x.jpg" })).status, "error");
+  process.env.VERIFY_MCP_C2PATOOL = join(dir, "does-not-exist");
+  assert.equal((await checkC2pa({ kind: "file", path: "/tmp/x.jpg" })).status, "error");
+});
+
 /* ---------------- stubs and heuristics ---------------- */
 
-test("stub checkers report skipped with a reason", async () => {
+test("observability stub reports skipped with a reason", async () => {
   for (const r of [
     await checkObservability({ kind: "dataset", schema: {}, records: [{}], assetId: "x" }),
     await checkObservability({ kind: "dataset", schema: {}, records: [{}] }),
-    await checkC2pa({ kind: "file", path: "/tmp/x.jpg" }),
   ]) {
     assert.equal(r.status, "skipped");
     assert.ok(r.reason);
