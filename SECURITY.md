@@ -16,8 +16,9 @@ No version has been published yet.
 | Unreleased `main`    | ✅ fixes land here first |
 
 - **Until 1.0, only the newest release gets fixes.** A fix is released as a new
-  version. While the version starts with `0.`, a minor release may change the
-  API, and the release notes say what changed.
+  version. Releases follow semantic versioning: a change that breaks the API or
+  the `EvidenceReport` shape is a new major version, so the first one releases
+  1.0.0, and the release notes say what changed.
 - **Security comes first.** If a vulnerability can't be fixed without changing
   the API or the `EvidenceReport` shape, the fix changes it, and the advisory
   and the release notes say what changed and why.
