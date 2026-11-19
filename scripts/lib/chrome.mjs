@@ -3,7 +3,7 @@
 // Needs google-chrome, or CHROME=/path/to/chrome.
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
@@ -17,7 +17,6 @@ import { setTimeout as wait } from 'node:timers/promises';
  */
 export const launchChrome = async () => {
   const profile = mkdtempSync(join(tmpdir(), 'evidence-report-mcp-chrome-'));
-  const port = 9300 + Math.floor(Math.random() * 600);
   const chrome = spawn(
     process.env.CHROME ?? 'google-chrome',
     [
@@ -25,12 +24,18 @@ export const launchChrome = async () => {
       '--disable-gpu',
       '--no-sandbox',
       '--hide-scrollbars',
-      `--remote-debugging-port=${port}`,
+      // Chrome picks a free port and writes it to DevToolsActivePort
+      '--remote-debugging-port=0',
       `--user-data-dir=${profile}`,
       'about:blank'
     ],
-    { stdio: 'ignore' }
+    { stdio: ['ignore', 'ignore', 'pipe'] }
   );
+
+  let output = '';
+
+  chrome.stderr.on('data', (chunk) => (output = (output + chunk).slice(-2000)));
+
   const exited = once(chrome, 'exit');
   // Chrome's helper processes can still write to the profile just after it
   // exits, so retry the removal
@@ -48,10 +53,17 @@ export const launchChrome = async () => {
   try {
     let target;
 
-    for (let i = 0; i < 50 && !target; i++) {
+    // A cold start on a CI runner can take a while
+    for (let i = 0; i < 150 && !target; i++) {
       await wait(200);
 
+      if (chrome.exitCode !== null) break;
+
       try {
+        const [port] = readFileSync(
+          join(profile, 'DevToolsActivePort'),
+          'utf8'
+        ).split('\n');
         const list = await (
           await fetch(`http://127.0.0.1:${port}/json`)
         ).json();
@@ -62,7 +74,11 @@ export const launchChrome = async () => {
       }
     }
 
-    if (!target) throw new Error('Chrome did not start');
+    if (!target) {
+      throw new Error(
+        `Chrome did not start${chrome.exitCode === null ? ' in 30 seconds' : `: it exited with ${chrome.exitCode}`}\n${output}`
+      );
+    }
 
     const ws = new WebSocket(target.webSocketDebuggerUrl);
 
