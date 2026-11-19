@@ -5,11 +5,13 @@
   <img alt="evidence-report-mcp: Evidence, not verdicts. Beside it, a report for lodash 4.17.20 that failed with two high findings from OSV.dev and lists what was not checked." src="./docs/public/logo/banner-light.png">
 </picture>
 
-A sketch of a "trust layer" MCP server: one `verify` tool an agent calls
-_before_ acting on data it did not produce. It returns an evidence report, not a
-checkmark.
+A "trust layer" MCP server: one `verify` tool an agent calls _before_ acting on
+data it did not produce, such as a package, a dataset, a media file or a claim.
+It returns an evidence report, not a checkmark: what was checked, where each
+result came from and when, and what was not checked.
 
-Companion to the talk _Invisible Data: Building Trust in the Age of AI_.
+Companion to the talk
+[_Invisible Data: Building Trust in the Age of AI_](https://slides.com/phun-ky/invisible-data-building-trust-in-the-age-of-ai).
 
 ## Install
 
@@ -28,12 +30,13 @@ claude mcp add evidence-report -- node /path/to/evidence-report-mcp/dist/cli.js
 ```
 
 The package also exports `verify`, `aggregate` and `createServer`, for use
-without MCP:
+without MCP, and the types of the report and its input (`EvidenceReport`,
+`CheckResult`, `Finding`, `Verdict`, `CheckKind`, `CheckStatus` and `Target`):
 
 ```ts
-import { verify } from 'evidence-report-mcp';
+import { verify, type EvidenceReport } from 'evidence-report-mcp';
 
-const report = await verify({
+const report: EvidenceReport = await verify({
   kind: 'package',
   ecosystem: 'npm',
   name: 'left-pad',
@@ -117,7 +120,7 @@ verdict stays `unknown`.
 - `checkCorroboration`: fetches nothing yet; only enforces two distinct source
   domains.
 
-## Ideas for v0.2
+## Ideas
 
 - `verify` over a lockfile or SBOM (OSV batch API).
 - A signed report (Sigstore) so downstream systems can trust the verifier's
