@@ -56,6 +56,14 @@ jobs:
         run: npm run typecheck
       - name: Test with coverage
         run: npm run test:ci
+      # Without the secret (pull requests from forks), Codecov falls back to a
+      # tokenless upload, and a failed upload doesn't fail the check
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: phun-ky/evidence-report-mcp
+          files: coverage/lcov.info
       - name: Build
         run: npm run build
       - name: Check the package

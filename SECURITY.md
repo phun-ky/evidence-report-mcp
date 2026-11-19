@@ -181,12 +181,13 @@ alert of high or critical severity. OpenSSF Scorecard runs on every push to
 
 The project keeps as few secrets as possible:
 
-| Secret     | Used by       | For                                                   |
-| ---------- | ------------- | ----------------------------------------------------- |
-| `GH_TOKEN` | `publish.yml` | Pushing release commits and tags, and GitHub releases |
+| Secret          | Used by       | For                                                   |
+| --------------- | ------------- | ----------------------------------------------------- |
+| `GH_TOKEN`      | `publish.yml` | Pushing release commits and tags, and GitHub releases |
+| `CODECOV_TOKEN` | `check.yml`   | Uploading test coverage to Codecov                    |
 
 Publishing to npm needs no secret: it uses short-lived OIDC tokens from GitHub.
-Every other workflow uses only the `GITHUB_TOKEN` GitHub gives each run, with
+Beyond these, workflows use only the `GITHUB_TOKEN` GitHub gives each run, with
 read-only permissions unless a job needs more.
 
 - **Storage:** secrets are kept only as encrypted GitHub Actions secrets, never

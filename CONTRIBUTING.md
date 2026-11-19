@@ -168,8 +168,10 @@ English, in code comments and documentation too.
 - **New behaviour comes with tests; a bug fix comes with a test** that fails
   without it.
 - **Coverage must not drop.** `npm run test:ci` fails below 96% of lines and
-  100% of branches and functions. The lines it can't reach are the bin's shebang
-  and the doc comments on type-only declarations.
+  100% of branches and functions. CI uploads the report (`coverage/lcov.info`)
+  to [Codecov](https://codecov.io/gh/phun-ky/evidence-report-mcp). The lines it
+  can't reach are the bin's shebang and the doc comments on type-only
+  declarations.
 
 ### Documentation
 
