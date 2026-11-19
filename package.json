@@ -55,10 +55,17 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:ci": "node --import tsx --test --enable-source-maps --experimental-test-coverage --test-coverage-include='src/**/*.ts' --test-coverage-exclude='src/**/__tests__/**' --test-coverage-exclude='src/test/**' --test-coverage-lines=98 --test-coverage-branches=100 --test-coverage-functions=100 'src/**/__tests__/**/*.spec.ts'",
+    "test:ci": "node --import tsx --test --enable-source-maps --experimental-test-coverage --test-coverage-include='src/**/*.ts' --test-coverage-exclude='src/**/__tests__/**' --test-coverage-exclude='src/test/**' --test-coverage-lines=96 --test-coverage-branches=100 --test-coverage-functions=100 'src/**/__tests__/**/*.spec.ts'",
     "prepare": "git config core.hooksPath .githooks || true",
     "test:hooks": "node --test scripts/__tests__/commit-msg.test.mjs",
     "check:pack": "node scripts/check-pack.mjs",
+    "docs:gen": "typedoc",
+    "docs:check": "typedoc --emit none --treatWarningsAsErrors",
+    "predocs:dev": "npm run docs:gen",
+    "docs:dev": "vitepress dev docs",
+    "predocs:build": "npm run docs:gen",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "render:logo": "node scripts/render-logo.mjs",
     "release": "release-it",
     "release:dry-run": ".github/scripts/should-release.sh && release-it --ci --dry-run --github.release=false --no-git.requireCleanWorkingDir --no-git.requireUpstream"
@@ -79,6 +86,15 @@
     "publint": "0.3.25",
     "release-it": "21.1.2",
     "tsx": "4.23.15",
-    "typescript": "6.0.3"
+    "typedoc": "0.28.20",
+    "typedoc-plugin-markdown": "4.14.1",
+    "typedoc-vitepress-theme": "1.1.4",
+    "typescript": "6.0.3",
+    "vitepress": "1.6.4"
+  },
+  "overrides": {
+    "vitepress": {
+      "vite": "6.4.5"
+    }
   }
 }

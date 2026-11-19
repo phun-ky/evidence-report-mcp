@@ -1,0 +1,21 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
+  "entryPoints": ["src/server.ts"],
+  "tsconfig": "tsconfig.build.json",
+  "out": "docs/api",
+  "docsRoot": "./docs",
+  "readme": "none",
+  "gitRevision": "main",
+  "hideGenerator": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "indexFormat": "list",
+  "interfacePropertiesFormat": "list",
+  "typeDeclarationFormat": "list",
+  "parametersFormat": "list",
+  "useCodeBlocks": true,
+  "expandObjects": true,
+  "expandParameters": true,
+  "intentionallyNotExported": ["TargetSchema"]
+}
