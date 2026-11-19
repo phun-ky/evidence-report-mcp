@@ -60,6 +60,11 @@ jobs:
         run: npm run docs:check
       - name: Build the docs site
         run: npm run docs:build
+      # Headless Chrome is on the runner image
+      - name: Check the docs site
+        run: npm run check:site
+      - name: Test the docs site checks
+        run: npm run test:site
 
   # The oldest Node in engines. Lint is left out: ESLint 10 needs 22.13.0 or
   # later, and lint only runs in development.
