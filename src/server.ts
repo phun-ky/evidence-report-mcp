@@ -10,6 +10,17 @@ import {
   type Verdict
 } from './types.js';
 
+// The report and target types, for consumers that read or build them
+export type {
+  CheckKind,
+  CheckResult,
+  CheckStatus,
+  EvidenceReport,
+  Finding,
+  Target,
+  Verdict
+} from './types.js';
+
 const { name, version } = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8')
 ) as {
