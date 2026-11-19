@@ -44,6 +44,8 @@ jobs:
       - run: npm ci
       - name: Test the commit hooks
         run: npm run test:hooks
+      - name: Test the README examples check
+        run: npm run test:readme
       - name: Lint
         run: npm run lint
       - name: Format check

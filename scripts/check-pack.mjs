@@ -2,7 +2,8 @@
 // files package.json points at, its LICENSE, README and CHANGELOG, and no
 // tests, lint it with publint and @arethetypeswrong/cli, then install it in an
 // empty project, check every source map resolves, import every export, require
-// it, and run the bin through an MCP initialize and tools/list over stdio. It
+// it, run the bin through an MCP initialize and tools/list over stdio, and run
+// the README's examples against it (scripts/lib/readme-examples.mjs). It
 // also checks the dependency rule: the build imports only declared
 // dependencies, runtime dependencies use caret ranges and devDependencies
 // exact versions. Adapted from angle. Run after `npm run build`.
@@ -21,6 +22,8 @@ import { dirname, join, relative } from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
+
+import { checkExamples } from './lib/readme-examples.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const BIN = join(ROOT, 'node_modules', '.bin');
@@ -290,6 +293,16 @@ try {
         problems.push(`bin ${command} failed over stdio: ${error.message}`);
       }
     }
+
+    // The README's examples, as published, against the installed package
+    const readme = checkExamples(
+      readFileSync(join(installed, 'README.md'), 'utf8'),
+      app
+    );
+
+    problems.push(...readme.map((problem) => `README.md: ${problem}`));
+
+    if (readme.length === 0) console.log('README.md: examples run as shown');
   }
 } finally {
   rmSync(work, { recursive: true, force: true });

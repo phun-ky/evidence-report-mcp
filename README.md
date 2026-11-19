@@ -66,6 +66,9 @@ const report: EvidenceReport = await verify({
   name: 'lodash',
   version: '4.17.20'
 });
+
+console.log(report.verdict); // fail
+console.log(report.summary); // Failed: 1/1 checks completed, 4 finding(s).
 ```
 
 ## Learn more
