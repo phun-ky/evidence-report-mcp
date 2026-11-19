@@ -103,8 +103,24 @@ What you can't rely on:
 
 ## Verifying Releases
 
-No release has been published yet. This section will describe how to verify one
-when the first release is published.
+The first release, 0.1.0, is published by hand and has no provenance. Every
+later release is published from GitHub Actions with npm trusted publishing, and
+carries a signed provenance attestation (Sigstore) that links it to the commit
+and workflow run that built it. To verify the packages you've installed:
+
+```shell
+npm audit signatures
+```
+
+The provenance must name the repository `phun-ky/evidence-report-mcp` and the
+workflow `.github/workflows/publish.yml`. The package's page on npm shows this
+under "Provenance", and
+`npm view evidence-report-mcp@<version> dist.attestations` lists the
+attestations.
+
+Each of those GitHub releases also has a software bill of materials attached, in
+CycloneDX format (`evidence-report-mcp-<version>.cdx.json`), listing the runtime
+dependencies.
 
 ## Dependencies
 
@@ -125,7 +141,8 @@ version is 14 days old, and security updates as soon as an advisory is
 published. Every pull request runs
 [dependency review](https://github.com/phun-ky/evidence-report-mcp/blob/main/.github/workflows/dependency-review.yml),
 which fails when a change adds a dependency with a known vulnerability of any
-severity.
+severity, and every automated release runs `npm audit` on runtime dependencies
+first.
 
 **Fixing known vulnerabilities.** Findings are checked against the GitHub
 Advisory Database:
@@ -159,6 +176,20 @@ alert of high or critical severity. OpenSSF Scorecard runs on every push to
 
 ## Secrets
 
-The repository has no secrets. Workflows use only the short-lived `GITHUB_TOKEN`
-GitHub gives each run, with read-only permissions unless a job needs more.
-Secret scanning with push protection blocks commits that contain a secret.
+The project keeps as few secrets as possible:
+
+| Secret     | Used by       | For                                                   |
+| ---------- | ------------- | ----------------------------------------------------- |
+| `GH_TOKEN` | `publish.yml` | Pushing release commits and tags, and GitHub releases |
+
+Publishing to npm needs no secret: it uses short-lived OIDC tokens from GitHub.
+Every other workflow uses only the `GITHUB_TOKEN` GitHub gives each run, with
+read-only permissions unless a job needs more.
+
+- **Storage:** secrets are kept only as encrypted GitHub Actions secrets, never
+  in the repository. Secret scanning with push protection blocks commits that
+  contain one.
+- **Access:** only the maintainer can view or change them, and they are not
+  available to workflows run from forks.
+- **Rotation:** at least once a year, and immediately if one may have been
+  exposed.
