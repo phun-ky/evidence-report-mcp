@@ -16,8 +16,9 @@ No version has been published yet.
 | Unreleased `main`    | ✅ fixes land here first |
 
 - **Until 1.0, only the newest release gets fixes.** A fix is released as a new
-  version. While the version starts with `0.`, a minor release may change the
-  API, and the release notes say what changed.
+  version. Releases follow semantic versioning: a change that breaks the API or
+  the `EvidenceReport` shape is a new major version, so the first one releases
+  1.0.0, and the release notes say what changed.
 - **Security comes first.** If a vulnerability can't be fixed without changing
   the API or the `EvidenceReport` shape, the fix changes it, and the advisory
   and the release notes say what changed and why.
@@ -140,10 +141,13 @@ Advisory Database:
 exploited through this project is allowed in dependency review. Each one is
 listed here and removed as soon as a fixed release reaches the tree:
 
-| Advisory                                                                 | Package            | Why it is accepted                                                                                                                                                                |
-| ------------------------------------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) | `picomatch` (high) | Development only, through `eslint-config-phun-ky`. A ReDoS in glob matching, reached only by this repository's own lint glob patterns, never by input. No patched version exists. |
-| [GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7) | `katex` (low)      | Development only, through `eslint-config-phun-ky` > `@eslint/markdown` > `micromark-extension-math`, which holds it at 0.16. Linting parses Markdown and never renders math.      |
+| Advisory                                                                 | Package              | Why it is accepted                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) | `picomatch` (high)   | Development only, through `eslint-config-phun-ky`. A ReDoS in glob matching, reached only by this repository's own lint glob patterns, never by input. No patched version exists.                                                                                                                                         |
+| [GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7) | `katex` (low)        | Development only, through `eslint-config-phun-ky` > `@eslint/markdown` > `micromark-extension-math`, which holds it at 0.16. Linting parses Markdown and never renders math.                                                                                                                                              |
+| [GHSA-c475-qrg2-pj4r](https://github.com/advisories/GHSA-c475-qrg2-pj4r) | `basic-ftp` (high)   | Development only, through `release-it` > `proxy-agent` > `pac-proxy-agent` > `get-uri`, each pinned to an exact version. A slow directory-listing parser, reached only when a proxy auto-config file is fetched over `ftp://`; releases never do that. Fixed in `proxy-agent` 8.0.3, which `release-it` does not use yet. |
+| [GHSA-5pm8-86m8-9m6r](https://github.com/advisories/GHSA-5pm8-86m8-9m6r) | `basic-ftp` (medium) | As above: a crash in the directory-listing parser, reached only over `ftp://`.                                                                                                                                                                                                                                            |
+| [GHSA-r4jh-29pc-gfqr](https://github.com/advisories/GHSA-r4jh-29pc-gfqr) | `basic-ftp` (medium) | As above: a crash on a password or path with a line break, reached only over `ftp://`.                                                                                                                                                                                                                                    |
 
 ## Code Scanning
 
