@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.1.0...0.2.0) (2026-11-19)
+
+### Tasks
+
+* 🤖 leave the generated changelog out of lint and format ([9d34b0e](https://github.com/phun-ky/evidence-report-mcp/commit/9d34b0e4fa596eec3400b993ae8f31e8e653daa1))
+* 🤖 render the logo PNGs from the marks with Work Sans ([794b99a](https://github.com/phun-ky/evidence-report-mcp/commit/794b99a2d4cc4d0c033aaeb5f7f3b89d0c9c0f70))
+
+### Documentation
+
+* ✏️ add the design tokens, the logo set, the README banner and the social card ([a15d858](https://github.com/phun-ky/evidence-report-mcp/commit/a15d858e8226cbab4c93da170d408174a987fd2a))
+* ✏️ describe the project as it is now and link the talk's slides ([91e5878](https://github.com/phun-ky/evidence-report-mcp/commit/91e5878d458c3046bdd1ee01d61cc24f974999c3))
+
+### Feature
+
+* 🎸 export the report types from the package entry ([04a0034](https://github.com/phun-ky/evidence-report-mcp/commit/04a0034baaeb1faae180287ea1853339d44ad1b2))
+
 ## 0.1.0 (2026-11-19)
 
 ### Tasks
