@@ -54,6 +54,8 @@ jobs:
         run: npm run test:ci
       - name: Build
         run: npm run build
+      - name: Check the package
+        run: npm run check:pack
 
   # The oldest Node in engines. Lint is left out: ESLint 10 needs 22.13.0 or
   # later, and lint only runs in development.
@@ -73,6 +75,8 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Check the package
+        run: npm run check:pack
 
   # The one required check: fails when any job above failed, was cancelled or
   # was skipped, so adding a job never needs a ruleset change.

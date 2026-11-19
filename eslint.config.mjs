@@ -18,5 +18,10 @@ export default defineConfig([
         { ignore: ['^@modelcontextprotocol/sdk/'] }
       ]
     }
+  },
+  {
+    // Command-line scripts report to the terminal
+    files: ['scripts/**'],
+    rules: { 'no-console': 'off' }
   }
 ]);
