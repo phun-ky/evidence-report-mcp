@@ -1,0 +1,79 @@
+{
+  "git": {
+    "commitMessage": "chore: 🤖 release v${version}",
+    "commitArgs": ["-s"]
+  },
+  "github": {
+    "release": true,
+    "tokenRef": "GH_TOKEN"
+  },
+  "npm": {
+    "publish": true,
+    "skipChecks": true
+  },
+  "hooks": {
+    "after:bump": "npm run build && npm run check:pack",
+    "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "header": "# Changelog",
+      "preset": {
+        "name": "conventionalcommits",
+        "types": [
+          {
+            "type": "chore",
+            "section": "Tasks",
+            "effect": "changelog"
+          },
+          {
+            "type": "docs",
+            "section": "Documentation",
+            "effect": "changelog"
+          },
+          {
+            "type": "feat",
+            "section": "Feature",
+            "effect": "bump"
+          },
+          {
+            "type": "fix",
+            "section": "Bug",
+            "effect": "bump"
+          },
+          {
+            "type": "perf",
+            "section": "Performance change",
+            "effect": "bump"
+          },
+          {
+            "type": "revert",
+            "section": "Reverts",
+            "effect": "bump"
+          },
+          {
+            "type": "refactor",
+            "section": "Refactoring",
+            "effect": "changelog"
+          },
+          {
+            "type": "release",
+            "section": "Create a release commit",
+            "effect": "hidden"
+          },
+          {
+            "type": "style",
+            "section": "Markup, white-space, formatting, missing semi-colons...",
+            "effect": "hidden"
+          },
+          {
+            "type": "test",
+            "section": "Adding missing tests",
+            "effect": "hidden"
+          }
+        ]
+      },
+      "infile": "CHANGELOG.md"
+    }
+  }
+}

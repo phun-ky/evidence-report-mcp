@@ -58,7 +58,9 @@
     "test:ci": "node --import tsx --test --enable-source-maps --experimental-test-coverage --test-coverage-include='src/**/*.ts' --test-coverage-exclude='src/**/__tests__/**' --test-coverage-exclude='src/test/**' --test-coverage-lines=98 --test-coverage-branches=100 --test-coverage-functions=100 'src/**/__tests__/**/*.spec.ts'",
     "prepare": "git config core.hooksPath .githooks || true",
     "test:hooks": "node --test scripts/__tests__/commit-msg.test.mjs",
-    "check:pack": "node scripts/check-pack.mjs"
+    "check:pack": "node scripts/check-pack.mjs",
+    "release": "release-it",
+    "release:dry-run": ".github/scripts/should-release.sh && release-it --ci --dry-run --github.release=false --no-git.requireCleanWorkingDir --no-git.requireUpstream"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
@@ -67,11 +69,13 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",
+    "@release-it/conventional-changelog": "12.0.2",
     "@types/node": "22.20.5",
     "eslint": "10.15.0",
     "eslint-config-phun-ky": "3.0.0",
     "prettier": "3.9.10",
     "publint": "0.3.25",
+    "release-it": "21.1.2",
     "tsx": "4.23.15",
     "typescript": "6.0.3"
   }
