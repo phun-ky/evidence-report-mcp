@@ -134,7 +134,7 @@ hooks described under
 | `npm run format:check`        | Checks formatting with Prettier, JSON and YAML included; `format` fixes it                                                                                 |
 | `npm run check:pack`          | After `build`: packs the package, lints it, installs it in an empty project, imports it, runs the bin and the README's examples, and checks dependencies   |
 | `npm run check:bestpractices` | Checks `.bestpractices.json`: every answer has a valid status and a justification, and every repository link in it and in `security-insights.yml` resolves |
-| `npm run bestpractices:url`   | Prints bestpractices.dev links that propose the answers that differ from the saved project; `--level passing` or `silver`                                  |
+| `npm run bestpractices:url`   | Prints bestpractices.dev links that propose the answers that differ from the saved project; `--level passing`, `silver` or `baseline-1` to `baseline-3`    |
 | `npm run test:hooks`          | Tests the commit hooks                                                                                                                                     |
 | `npm run test:readme`         | Tests the README examples check                                                                                                                            |
 | `npm run docs:dev`            | Serves the docs site with live reload                                                                                                                      |
