@@ -5,6 +5,14 @@
   <img alt="evidence-report-mcp: Unknown is not pass. The headline is cut by a line: checked above it, not checked below. An MCP server that tells agents what was checked, where it came from, and what was not." src="./docs/public/logo/banner-light.png">
 </picture>
 
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)](./CONTRIBUTING.md)
+[![SemVer 2.0](https://img.shields.io/badge/SemVer-2.0-green.svg)](https://semver.org/spec/v2.0.0.html)
+[![npm version](https://img.shields.io/npm/v/evidence-report-mcp)](https://www.npmjs.com/package/evidence-report-mcp)
+[![issues](https://img.shields.io/github/issues/phun-ky/evidence-report-mcp)](https://github.com/phun-ky/evidence-report-mcp/issues)
+[![licence](https://img.shields.io/npm/l/evidence-report-mcp)](./LICENSE)
+[![npm downloads](https://img.shields.io/npm/dm/evidence-report-mcp)](https://www.npmjs.com/package/evidence-report-mcp)
+[![GitHub Repo stars](https://img.shields.io/github/stars/phun-ky/evidence-report-mcp)](https://github.com/phun-ky/evidence-report-mcp)
+[![build](https://github.com/phun-ky/evidence-report-mcp/actions/workflows/check.yml/badge.svg)](https://github.com/phun-ky/evidence-report-mcp/actions/workflows/check.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16929/badge)](https://www.bestpractices.dev/projects/16929)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/phun-ky/evidence-report-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/phun-ky/evidence-report-mcp)
 
