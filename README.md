@@ -12,6 +12,7 @@
 [![licence](https://img.shields.io/npm/l/evidence-report-mcp)](./LICENSE)
 [![npm downloads](https://img.shields.io/npm/dm/evidence-report-mcp)](https://www.npmjs.com/package/evidence-report-mcp)
 [![GitHub Repo stars](https://img.shields.io/github/stars/phun-ky/evidence-report-mcp)](https://github.com/phun-ky/evidence-report-mcp)
+[![codecov](https://codecov.io/gh/phun-ky/evidence-report-mcp/graph/badge.svg)](https://codecov.io/gh/phun-ky/evidence-report-mcp)
 [![build](https://github.com/phun-ky/evidence-report-mcp/actions/workflows/check.yml/badge.svg)](https://github.com/phun-ky/evidence-report-mcp/actions/workflows/check.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16929/badge)](https://www.bestpractices.dev/projects/16929)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/phun-ky/evidence-report-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/phun-ky/evidence-report-mcp)
