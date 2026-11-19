@@ -78,11 +78,12 @@
   color: var(--er-note-ink);
 }
 
-/* The wordmark: Big Shoulders in capitals, as on the home page */
+/* The wordmark: Big Shoulders in capitals, as on the home page. 18px keeps
+   it inside the sidebar's column (208px of content) on doc pages */
 .VPNavBarTitle .title {
   font-family: var(--er-font-display);
   font-weight: var(--er-weight-display);
-  font-size: 24px;
+  font-size: 18px;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -108,10 +109,6 @@
 }
 
 @media (max-width: 760px) {
-  .VPNavBarTitle .title {
-    font-size: 20px;
-  }
-
   .vp-doc h1 {
     font-size: 48px;
   }
