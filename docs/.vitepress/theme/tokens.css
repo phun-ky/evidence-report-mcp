@@ -1,0 +1,124 @@
+/*
+ * Design tokens for direction D, "the report, taken apart" (issue 22): Work
+ * Sans on frost, slate and teal, with square corners. Light on :root; dark on
+ * .dark, the class VitePress puts on <html> (it follows the system setting
+ * until the reader picks a theme). Every text and background pair below
+ * passes WCAG 2.2 AA in both themes. Fonts come from @fontsource/work-sans
+ * (300, 400 and 600), imported by the theme.
+ */
+:root {
+  /* Grounds, from the page down to the report's panels */
+  --er-bg: #f7f9fa;
+  --er-surface: #e6ecef;
+  --er-tile: #dde5e9;
+  --er-panel: #ffffff;
+
+  /* Text */
+  --er-ink: #1f3038;
+  --er-muted: #4f5f67;
+  --er-link: #0b6974;
+
+  /* The one accent, with its text */
+  --er-accent: #0d7480;
+  --er-accent-ink: #ffffff;
+
+  /* Dark fields: the explainer bands and code */
+  --er-field: #1f3038;
+  --er-field-2: #2a414b;
+  --er-field-ink: #eef3f5;
+  --er-code-bg: #1f3038;
+  --er-code-ink: #eef3f5;
+  --er-code-key: #8fd9e2;
+  --er-code-string: #d6e8b0;
+  --er-code-comment: #a9bcc4;
+
+  /* The strips that label each tile: verdict, check, source, finding */
+  --er-strip-1: #0d7480;
+  --er-strip-2: #1f3038;
+  --er-strip-3: #3d5f6b;
+  --er-strip-4: #5b4a8b;
+  --er-strip-ink: #ffffff;
+
+  /* The mark: the top tile, then the second and the open third */
+  --er-mark-a: #0d7480;
+  --er-mark-b: #1f3038;
+
+  /* Verdicts, each a background with its text */
+  --er-pass-bg: #d2eedc;
+  --er-pass-ink: #0b5527;
+  --er-fail-bg: #f8dada;
+  --er-fail-ink: #8a1212;
+  --er-unknown-bg: #f3e6c2;
+  --er-unknown-ink: #5e4100;
+
+  /* Notes and table rules */
+  --er-note-bg: #d4ecee;
+  --er-note-ink: #12343a;
+  --er-table-line: #c6d2d8;
+
+  /* Type */
+  --er-font-text: 'Work Sans', system-ui, sans-serif;
+  --er-font-display: 'Work Sans', system-ui, sans-serif;
+  --er-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --er-weight-display: 300;
+  --er-weight-text: 400;
+  --er-weight-strong: 600;
+  --er-tracking-display: -0.035em;
+  --er-leading-display: 1;
+  --er-leading-text: 1.5;
+
+  /* Space, on a 4 px step */
+  --er-space-1: 4px;
+  --er-space-2: 8px;
+  --er-space-3: 12px;
+  --er-space-4: 16px;
+  --er-space-5: 24px;
+  --er-space-6: 40px;
+  --er-space-7: 72px;
+
+  /* Shape: square corners everywhere */
+  --er-radius: 0;
+}
+
+.dark {
+  --er-bg: #0f171b;
+  --er-surface: #18242a;
+  --er-tile: #1d2b32;
+  --er-panel: #142026;
+
+  --er-ink: #e4edf0;
+  --er-muted: #a3b4bc;
+  --er-link: #7fd5df;
+
+  --er-accent: #5cc6d2;
+  --er-accent-ink: #08191c;
+
+  --er-field: #08100f;
+  --er-field-2: #0f1c20;
+  --er-field-ink: #e4edf0;
+  --er-code-bg: #08100f;
+  --er-code-ink: #eef3f5;
+  --er-code-key: #8fd9e2;
+  --er-code-string: #d6e8b0;
+  --er-code-comment: #a9bcc4;
+
+  --er-strip-1: #137f8b;
+  --er-strip-2: #2f4a55;
+  --er-strip-3: #42606c;
+  --er-strip-4: #5d4d8e;
+  --er-strip-ink: #ffffff;
+
+  --er-mark-a: #5cc6d2;
+  --er-mark-b: #e4edf0;
+
+  --er-pass-bg: #12391f;
+  --er-pass-ink: #b5edc5;
+  --er-fail-bg: #471414;
+  --er-fail-ink: #ffc8c8;
+  --er-unknown-bg: #3f3108;
+  --er-unknown-ink: #ffe09b;
+
+  --er-note-bg: #12373c;
+  --er-note-ink: #e4edf0;
+  --er-table-line: #2c3c44;
+}

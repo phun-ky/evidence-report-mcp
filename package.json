@@ -59,6 +59,7 @@
     "prepare": "git config core.hooksPath .githooks || true",
     "test:hooks": "node --test scripts/__tests__/commit-msg.test.mjs",
     "check:pack": "node scripts/check-pack.mjs",
+    "render:logo": "node scripts/render-logo.mjs",
     "release": "release-it",
     "release:dry-run": ".github/scripts/should-release.sh && release-it --ci --dry-run --github.release=false --no-git.requireCleanWorkingDir --no-git.requireUpstream"
   },
@@ -69,6 +70,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",
+    "@fontsource/work-sans": "5.3.0",
     "@release-it/conventional-changelog": "12.0.2",
     "@types/node": "22.20.5",
     "eslint": "10.15.0",
