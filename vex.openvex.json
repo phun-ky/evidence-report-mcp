@@ -1,0 +1,76 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/phun-ky/evidence-report-mcp/blob/main/vex.openvex.json",
+  "author": "Alexander Vassbotn Røyne-Helgesen",
+  "role": "Maintainer",
+  "timestamp": "2026-11-19T00:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-fc5q-39xc-vjpf",
+        "name": "GHSA-fc5q-39xc-vjpf"
+      },
+      "timestamp": "2026-11-19T00:00:00Z",
+      "products": [{ "@id": "pkg:npm/evidence-report-mcp" }],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "picomatch is a development dependency only (through eslint-config-phun-ky) and is not a dependency of the published package. In development, the ReDoS is reached only by this repository's own lint glob patterns, never by input."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-238p-pmpm-9mq7",
+        "name": "GHSA-238p-pmpm-9mq7"
+      },
+      "timestamp": "2026-11-19T00:00:00Z",
+      "products": [{ "@id": "pkg:npm/evidence-report-mcp" }],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "katex is a development dependency only (eslint-config-phun-ky > @eslint/markdown > micromark-extension-math > katex) and is not a dependency of the published package. In development, linting parses Markdown and never renders math."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-c475-qrg2-pj4r",
+        "name": "GHSA-c475-qrg2-pj4r"
+      },
+      "timestamp": "2026-11-19T00:00:00Z",
+      "products": [{ "@id": "pkg:npm/evidence-report-mcp" }],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "basic-ftp is a development dependency only (release-it > proxy-agent > pac-proxy-agent > get-uri > basic-ftp) and is not a dependency of the published package. In development, it is reached only when a proxy auto-config file is fetched over ftp://, which releases never do."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-5pm8-86m8-9m6r",
+        "name": "GHSA-5pm8-86m8-9m6r"
+      },
+      "timestamp": "2026-11-19T00:00:00Z",
+      "products": [{ "@id": "pkg:npm/evidence-report-mcp" }],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "basic-ftp is a development dependency only (release-it > proxy-agent > pac-proxy-agent > get-uri > basic-ftp) and is not a dependency of the published package. In development, it is reached only over ftp://, which releases never use."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-r4jh-29pc-gfqr",
+        "name": "GHSA-r4jh-29pc-gfqr"
+      },
+      "timestamp": "2026-11-19T00:00:00Z",
+      "products": [{ "@id": "pkg:npm/evidence-report-mcp" }],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "basic-ftp is a development dependency only (release-it > proxy-agent > pac-proxy-agent > get-uri > basic-ftp) and is not a dependency of the published package. In development, it is reached only over ftp://, which releases never use."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+        "name": "GHSA-g3hv-75wg-m249"
+      },
+      "timestamp": "2026-11-19T00:00:00Z",
+      "products": [{ "@id": "pkg:npm/evidence-report-mcp" }],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "minimatch 10 is a development dependency only (through typedoc, which builds the API docs) and is not a dependency of the published package. In development, it matches only this repository's own entry point and exclude patterns, never input."
+    }
+  ]
+}

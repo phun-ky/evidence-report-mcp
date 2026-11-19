@@ -15,6 +15,7 @@
 [![codecov](https://codecov.io/gh/phun-ky/evidence-report-mcp/graph/badge.svg)](https://codecov.io/gh/phun-ky/evidence-report-mcp)
 [![build](https://github.com/phun-ky/evidence-report-mcp/actions/workflows/check.yml/badge.svg)](https://github.com/phun-ky/evidence-report-mcp/actions/workflows/check.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16929/badge)](https://www.bestpractices.dev/projects/16929)
+[![OpenSSF Baseline](https://www.bestpractices.dev/projects/16929/baseline)](https://www.bestpractices.dev/projects/16929)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/phun-ky/evidence-report-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/phun-ky/evidence-report-mcp)
 
 A "trust layer" MCP server: one `verify` tool an agent calls _before_ acting on

@@ -158,7 +158,9 @@ Advisory Database:
 
 **Accepted exceptions.** A vulnerability that can't be fixed yet and can't be
 exploited through this project is allowed in dependency review. Each one is
-listed here and removed as soon as a fixed release reaches the tree:
+listed here, and in
+[`vex.openvex.json`](https://github.com/phun-ky/evidence-report-mcp/blob/main/vex.openvex.json)
+as OpenVEX statements, and removed as soon as a fixed release reaches the tree:
 
 | Advisory                                                                 | Package              | Why it is accepted                                                                                                                                                                                                                                                                                                        |
 | ------------------------------------------------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
