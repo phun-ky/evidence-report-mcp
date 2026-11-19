@@ -5,6 +5,9 @@
   <img alt="evidence-report-mcp: Evidence, not verdicts. Beside it, a report for lodash 4.17.20 that failed with two high findings from OSV.dev and lists what was not checked." src="./docs/public/logo/banner-light.png">
 </picture>
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16929/badge)](https://www.bestpractices.dev/projects/16929)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/phun-ky/evidence-report-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/phun-ky/evidence-report-mcp)
+
 A "trust layer" MCP server: one `verify` tool an agent calls _before_ acting on
 data it did not produce, such as a package, a dataset, a media file or a claim.
 It returns an evidence report, not a checkmark: what was checked, where each
@@ -85,7 +88,7 @@ console.log(report.summary); // Failed: 1/1 checks completed, 4 finding(s).
 - [Configuration](https://phun-ky.net/evidence-report-mcp/guide/configuration),
   including `c2patool` for media files
 - [API reference](https://phun-ky.net/evidence-report-mcp/api/)
-- [Security policy](./SECURITY.md)
+- [Security policy](./SECURITY.md) and [assurance case](./ASSURANCE.md)
 - [Contributing](./CONTRIBUTING.md), [governance](./GOVERNANCE.md),
   [roadmap](./ROADMAP.md) and [Code of Conduct](./CODE_OF_CONDUCT.md)
 

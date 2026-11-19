@@ -46,6 +46,8 @@ jobs:
         run: npm run test:hooks
       - name: Test the README examples check
         run: npm run test:readme
+      - name: Check the Best Practices answers
+        run: npm run check:bestpractices
       - name: Lint
         run: npm run lint
       - name: Format check
