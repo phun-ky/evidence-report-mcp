@@ -60,6 +60,8 @@
     "test:hooks": "node --test scripts/__tests__/commit-msg.test.mjs",
     "test:readme": "node --test scripts/__tests__/readme-examples.test.mjs",
     "check:pack": "node scripts/check-pack.mjs",
+    "check:bestpractices": "node scripts/check-bestpractices.mjs",
+    "bestpractices:url": "node scripts/bestpractices-url.mjs",
     "docs:gen": "typedoc",
     "docs:check": "typedoc --emit none --treatWarningsAsErrors",
     "predocs:dev": "npm run docs:gen",
