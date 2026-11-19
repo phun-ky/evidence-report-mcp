@@ -86,6 +86,8 @@ console.log(report.summary); // Failed: 1/1 checks completed, 4 finding(s).
   including `c2patool` for media files
 - [API reference](https://phun-ky.net/evidence-report-mcp/api/)
 - [Security policy](./SECURITY.md)
+- [Contributing](./CONTRIBUTING.md), [governance](./GOVERNANCE.md),
+  [roadmap](./ROADMAP.md) and [Code of Conduct](./CODE_OF_CONDUCT.md)
 
 ## Licence
 

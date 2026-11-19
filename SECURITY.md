@@ -7,7 +7,9 @@ tracked and kept clear of known vulnerabilities is described under
 
 ## Supported Versions
 
-No version has been published yet.
+Releases are published to npm as
+[`evidence-report-mcp`](https://www.npmjs.com/package/evidence-report-mcp); the
+[changelog](CHANGELOG.md) lists each one.
 
 | Release              | Supported                |
 | -------------------- | ------------------------ |
