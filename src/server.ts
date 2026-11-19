@@ -4,9 +4,10 @@ import { readFileSync } from 'node:fs';
 
 import { plan } from './checkers.js';
 import {
-  Target,
+  TargetSchema,
   type CheckResult,
   type EvidenceReport,
+  type Target,
   type Verdict
 } from './types.js';
 
@@ -30,11 +31,19 @@ const { name, version } = JSON.parse(
 const VERIFIER = { name, version };
 
 /**
- * Fail closed:
- *  1. Any failed check            -> "fail"
- *  2. Any required check not run  -> "unknown"  (unknown is not zero)
- *  3. Only heuristics passed      -> "unknown"  (judgment can't certify)
- *  4. Otherwise                   -> "pass"
+ * Combines check results into one verdict, failing closed, in this order:
+ *
+ * 1. Any check that failed makes the verdict `fail`, even a heuristic one or
+ *    one that is not required.
+ * 2. A required check that is missing, errored or was skipped makes it
+ *    `unknown`: unknown is not zero.
+ * 3. If only heuristic checks are required and passed, it is `unknown`:
+ *    judgement can't certify.
+ * 4. Otherwise it is `pass`.
+ *
+ * @param checks - The results of the checks that ran.
+ * @param required - The ids of the checks that must pass for a `pass`.
+ * @returns The verdict.
  */
 export function aggregate(checks: CheckResult[], required: string[]): Verdict {
   if (checks.some((c) => c.status === 'fail')) return 'fail';
@@ -61,6 +70,14 @@ function summarise(verdict: Verdict, checks: CheckResult[]): string {
   return `${label}: ${ran}/${checks.length} checks completed, ${findings} finding(s).`;
 }
 
+/**
+ * Runs every check for a target and returns the evidence report. Checks never
+ * throw: a check that fails to run is reported with status `error`.
+ *
+ * @param target - What to verify: a package, a dataset, a file or a claim.
+ * @returns The report, with the verdict, each check's evidence and what was
+ *   not checked.
+ */
 export async function verify(target: Target): Promise<EvidenceReport> {
   const p = plan(target);
   const checks = await Promise.all(p.checks);
@@ -77,6 +94,13 @@ export async function verify(target: Target): Promise<EvidenceReport> {
   };
 }
 
+/**
+ * Creates the MCP server with its one tool, `verify`, which is read-only. It
+ * is not connected to a transport; the `evidence-report-mcp` command connects
+ * it to stdio.
+ *
+ * @returns The server, ready to connect.
+ */
 export function createServer(): McpServer {
   const server = new McpServer(VERIFIER);
 
@@ -89,7 +113,7 @@ export function createServer(): McpServer {
         'Call this BEFORE acting on data you did not produce.',
         "Treat verdict 'unknown' as 'not verified'. Read 'notChecked' before telling a user something is safe or true."
       ].join(' '),
-      inputSchema: { target: Target },
+      inputSchema: { target: TargetSchema },
       annotations: { readOnlyHint: true, openWorldHint: true }
     },
     async ({ target }) => {
