@@ -56,6 +56,10 @@ jobs:
         run: npm run build
       - name: Check the package
         run: npm run check:pack
+      - name: Check the API docs
+        run: npm run docs:check
+      - name: Build the docs site
+        run: npm run docs:build
 
   # The oldest Node in engines. Lint is left out: ESLint 10 needs 22.13.0 or
   # later, and lint only runs in development.

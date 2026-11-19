@@ -29,6 +29,10 @@ jobs:
           #   reached only when a proxy auto-config file is fetched over
           #   ftp://, which releases never do. Remove when release-it depends
           #   on proxy-agent 8.0.3 or later (basic-ftp 6.2.4 or later).
+          # GHSA-g3hv-75wg-m249: minimatch 10, decided on issue 14. Only
+          #   through typedoc, which matches this repository's own entry point
+          #   and exclude globs, never outside input. Remove when typedoc
+          #   depends on minimatch 11.0.1 or later.
           allow-ghsas:
             GHSA-fc5q-39xc-vjpf, GHSA-238p-pmpm-9mq7, GHSA-c475-qrg2-pj4r,
-            GHSA-5pm8-86m8-9m6r, GHSA-r4jh-29pc-gfqr
+            GHSA-5pm8-86m8-9m6r, GHSA-r4jh-29pc-gfqr, GHSA-g3hv-75wg-m249
