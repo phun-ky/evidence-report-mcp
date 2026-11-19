@@ -89,6 +89,14 @@ export default defineConfig({
           {
             text: 'Security policy',
             link: 'https://github.com/phun-ky/evidence-report-mcp/blob/main/SECURITY.md'
+          },
+          {
+            text: 'Contributing',
+            link: 'https://github.com/phun-ky/evidence-report-mcp/blob/main/CONTRIBUTING.md'
+          },
+          {
+            text: 'Roadmap',
+            link: 'https://github.com/phun-ky/evidence-report-mcp/blob/main/ROADMAP.md'
           }
         ]
       }
