@@ -374,8 +374,9 @@ const kinds = [
         :class="column.lift"
         aria-hidden="true"
       >
+        <!-- The board is as tall as the window: repeat the tiles so every column runs past its bottom edge -->
         <div
-          v-for="(tile, t) in column.tiles"
+          v-for="(tile, t) in Array(4).fill(column.tiles).flat()"
           :key="t"
           class="tile"
           :class="tile.tone"
