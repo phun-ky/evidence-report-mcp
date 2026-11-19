@@ -3,8 +3,6 @@
 // - axe: no WCAG 2.2 A or AA violations, in light and in dark
 // - links: every internal link, anchor and asset resolves
 // - overflow: no horizontal scroll at 390, 768 and 1440 pixels wide
-// - board: the home page's tile board has no blank band, on a usual and a tall
-//   screen
 // It serves the site the way GitHub Pages does (clean URLs, under the base
 // path). Needs google-chrome, or CHROME=/path/to/chrome.
 // Usage: node scripts/check-site.mjs [dir] [--base /evidence-report-mcp/]
@@ -30,10 +28,6 @@ const AXE = readFileSync(
 );
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const WIDTHS = [390, 768, 1440];
-const BOARD_SIZES = [
-  [1440, 900],
-  [2560, 1400]
-];
 const TYPES = {
   '.css': 'text/css',
   '.html': 'text/html; charset=utf-8',
@@ -232,15 +226,6 @@ try {
       }
     }
   };
-  /** How far each board column stops short of the board's bottom edge. */
-  const boardGaps = () =>
-    evaluate(`(() => {
-      const board = document.querySelector('.board');
-      if (!board || getComputedStyle(board).display !== 'grid') return null;
-      const bottom = board.getBoundingClientRect().bottom;
-      return [...board.querySelectorAll(':scope > .col')]
-        .map((col) => Math.round(bottom - col.lastElementChild.getBoundingClientRect().bottom));
-    })()`);
 
   for (const page of pages) {
     process.stdout.write(`${page}\n`);
@@ -250,8 +235,6 @@ try {
     await checkOverflow(page, 1440);
     await checkLinks(page);
     await checkAxe(page, 'light');
-
-    const hasBoard = (await boardGaps()) !== null;
 
     await load(page, { width: 1440, dark: true });
     checkNetwork(page, 'dark, 1440px');
@@ -270,23 +253,6 @@ try {
       await load(page, { width });
       checkNetwork(page, `light, ${width}px`);
       await checkOverflow(page, width);
-    }
-
-    if (hasBoard) {
-      for (const [width, height] of BOARD_SIZES) {
-        await load(page, { width, height });
-
-        const gaps = await boardGaps();
-        const short = gaps.filter((gap) => gap > 0);
-
-        if (short.length > 0) {
-          fail(
-            page,
-            'board',
-            `${short.length} column(s) stop up to ${Math.max(...short)}px short of the board's bottom edge at ${width}x${height}`
-          );
-        }
-      }
     }
   }
 } finally {

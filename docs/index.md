@@ -1,10 +1,10 @@
 ---
 layout: home
 markdownStyles: false
-title: Evidence, not verdicts
+title: Unknown is not pass
 titleTemplate: ':title | evidence-report-mcp'
 ---
 
-<!-- The home page is the report taken apart, in .vitepress/theme/components/ReportHome.vue -->
+<!-- The home page is the waterline, in .vitepress/theme/components/ReportHome.vue -->
 
 <ReportHome />

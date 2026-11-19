@@ -1,7 +1,8 @@
 // Render the logo's PNGs from the SVG marks in docs/public/logo: the README
 // banners, the social cards and the PNG icons. They're drawn as HTML with the
-// site's Work Sans in headless Chrome, with the colours read from the design
-// tokens, so they match the docs. Adapted from hybrid-compute.
+// site's Big Shoulders and Public Sans in headless Chrome, with the colours
+// read from the design tokens, so they match the docs. Adapted from
+// hybrid-compute.
 // Needs google-chrome (or CHROME=/path/to/chrome) and Python with Pillow,
 // which turns each PNG into a palette image to keep it small.
 // Usage: node scripts/render-logo.mjs
@@ -24,18 +25,19 @@ import { launchChrome } from './lib/chrome.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LOGO = join(ROOT, 'docs', 'public', 'logo');
-const FONTS = join(ROOT, 'node_modules', '@fontsource', 'work-sans', 'files');
+const FONTSOURCE = join(ROOT, 'node_modules', '@fontsource');
 const TOKENS = readFileSync(
   join(ROOT, 'docs', '.vitepress', 'theme', 'tokens.css'),
   'utf8'
 );
 const work = mkdtempSync(join(tmpdir(), 'evidence-report-mcp-logo-'));
 
-for (const weight of [300, 400, 600]) {
-  copyFileSync(
-    join(FONTS, `work-sans-latin-${weight}-normal.woff2`),
-    join(work, `work-sans-${weight}.woff2`)
-  );
+for (const font of [
+  'big-shoulders/files/big-shoulders-latin-800-normal.woff2',
+  'public-sans/files/public-sans-latin-400-normal.woff2',
+  'public-sans/files/public-sans-latin-600-normal.woff2'
+]) {
+  copyFileSync(join(FONTSOURCE, font), join(work, font.split('/').pop()));
 }
 
 /** The --er-* tokens of one CSS block, as CSS that sets them on :root. */
@@ -55,84 +57,65 @@ const LIGHT = tokensOf(':root');
 const DARK = `${LIGHT}\n${tokensOf('.dark')}`;
 const svg = (file) => readFileSync(join(LOGO, file), 'utf8');
 const MARKS = { light: svg('mark.svg'), dark: svg('mark-dark.svg') };
-const HEADLINE = 'Evidence, not verdicts.';
 const TAGLINE =
-  'An MCP server that tells agents what was checked, and what was not.';
-const page = (body, tokens, background = 'var(--er-bg)') => `<!doctype html>
+  'An MCP server that tells agents what was checked, where it came from, and what was not.';
+const page = (body, tokens) => `<!doctype html>
 <meta charset="utf-8">
 <style>
-  @font-face { font-family: 'Work Sans'; src: url(work-sans-300.woff2); font-weight: 300; }
-  @font-face { font-family: 'Work Sans'; src: url(work-sans-400.woff2); font-weight: 400; }
-  @font-face { font-family: 'Work Sans'; src: url(work-sans-600.woff2); font-weight: 600; }
+  @font-face { font-family: 'Big Shoulders'; src: url(big-shoulders-latin-800-normal.woff2); font-weight: 800; }
+  @font-face { font-family: 'Public Sans'; src: url(public-sans-latin-400-normal.woff2); font-weight: 400; }
+  @font-face { font-family: 'Public Sans'; src: url(public-sans-latin-600-normal.woff2); font-weight: 600; }
   ${tokens}
-  html, body { margin: 0; background: ${background}; color: var(--er-ink); font-family: var(--er-font-text); overflow: hidden; }
+  html, body { margin: 0; background: var(--er-bg); color: var(--er-ink); font-family: var(--er-font-text); overflow: hidden; }
   * { box-sizing: border-box; }
-  .wordmark { display: flex; align-items: center; gap: 12px; font-weight: 600; letter-spacing: -0.01em; }
+  .hero { position: relative; overflow: hidden; }
+  .below { position: absolute; inset: var(--line) 0 0 0; background: var(--er-field); }
+  .layer { position: absolute; inset: 0; }
+  .top { clip-path: inset(0 0 calc(100% - var(--line)) 0); color: var(--er-ink); }
+  .under { clip-path: inset(var(--line) 0 0 0); color: var(--er-field-ink); }
+  .headline { position: absolute; left: 0; right: 0; top: calc(var(--line) - 1.32 * var(--fs)); margin: 0; text-align: center; font-family: var(--er-font-display); font-weight: 800; font-size: var(--fs); line-height: 0.88; letter-spacing: -0.005em; text-transform: uppercase; }
+  .headline span { display: block; }
+  .wordmark { position: absolute; display: flex; align-items: center; gap: 12px; font-family: var(--er-font-display); font-weight: 800; text-transform: uppercase; }
   .wordmark svg { flex: none; }
-  h1 { margin: 0; font-family: var(--er-font-display); font-weight: var(--er-weight-display); letter-spacing: var(--er-tracking-display); line-height: var(--er-leading-display); }
-  p { margin: 0; color: var(--er-muted); line-height: 1.4; }
-  .report { background: var(--er-tile); padding: 16px; font-size: 15px; line-height: 1.4; }
-  .report header { display: flex; gap: 10px; align-items: baseline; margin-bottom: 12px; }
-  .verdict { padding: 0 0.45em; font-weight: 600; background: var(--er-fail-bg); color: var(--er-fail-ink); }
-  .check { background: var(--er-panel); padding: 10px 14px; margin-bottom: 10px; }
-  .head { display: flex; justify-content: space-between; font-weight: 600; }
-  .src { color: var(--er-muted); margin: 2px 0 6px; }
-  .rows { list-style: none; margin: 0; padding: 0; }
-  .rows li { display: grid; grid-template-columns: 3.4em 1fr; gap: 8px; padding: 2px 0; }
-  .sev { font-weight: 600; color: var(--er-fail-ink); }
-  .nc { padding: 10px 14px; background: var(--er-unknown-bg); color: var(--er-unknown-ink); }
-  .nc b { display: block; margin-bottom: 2px; }
-  .nc ul { margin: 0; padding-left: 18px; }
+  .foot { position: absolute; display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; margin: 0; color: var(--er-field-ink); line-height: 1.4; }
 </style>
 ${body}`;
 const mark = (theme, size) =>
   MARKS[theme].replace('<svg ', `<svg width="${size}" height="${size}" `);
-/** The report from the home page: lodash 4.17.20, checked against OSV.dev. */
-const report = (
-  notChecked,
-  size
-) => `<div class="report" style="font-size:${size}px">
-  <header><span class="verdict">fail</span><span>Failed: 1/1 checks completed, 4 finding(s).</span></header>
-  <div class="check">
-    <div class="head"><span>osv.vulnerabilities</span><span>deterministic</span></div>
-    <div class="src">OSV.dev, retrieved 18 Nov 2026 12:07 UTC</div>
-    <ul class="rows">
-      <li><span class="sev">high</span><span>Command Injection in lodash</span></li>
-      <li><span class="sev">high</span><span>Code Injection via _.template imports</span></li>
-    </ul>
-  </div>
-  <div class="nc"><b>Not checked</b><ul>${notChecked.map((item) => `<li>${item}</li>`).join('')}</ul></div>
-</div>`;
-const NOT_CHECKED = [
-  'Unpublished or zero-day vulnerabilities',
-  'Malicious behaviour without an advisory',
-  'Whether this package is the right one for the job'
-];
+const HEADLINE = '<span>Unknown</span><span>is not pass</span>';
+/** The home page's first screen in small: the waterline through the headline. */
+const waterline = ({ theme, width, height, fs, inset, wordmark, foot, url }) =>
+  page(
+    `<div class="hero" style="width:${width}px;height:${height}px;--fs:${fs}px;--line:50%">
+      <div class="below"></div>
+      <div class="layer top"><div class="headline">${HEADLINE}</div></div>
+      <div class="layer under"><div class="headline">${HEADLINE}</div></div>
+      <div class="wordmark" style="left:${inset}px;top:${inset}px;font-size:${wordmark}px">${mark(theme, Math.round(wordmark * 1.3))}<span>evidence-report-mcp</span></div>
+      <div class="foot" style="left:${inset}px;right:${inset}px;bottom:${inset}px;font-size:${foot}px"><span style="max-width:30em">${TAGLINE}</span>${url ? '<span style="font-family:var(--er-font-mono);white-space:nowrap">phun-ky.net/evidence-report-mcp</span>' : ''}</div>
+    </div>`,
+    theme === 'dark' ? DARK : LIGHT
+  );
 const banner = (theme) =>
-  page(
-    `<div style="width:1280px;height:400px;padding:48px 56px;display:grid;grid-template-columns:1fr 580px;gap:48px;align-items:center">
-      <div>
-        <div class="wordmark" style="font-size:24px">${mark(theme, 36)}<span>evidence-report-mcp</span></div>
-        <h1 style="font-size:72px;margin-top:36px">${HEADLINE}</h1>
-        <p style="margin-top:22px;font-size:23px">${TAGLINE}</p>
-      </div>
-      ${report(NOT_CHECKED.slice(0, 2), 18)}
-    </div>`,
-    theme === 'dark' ? DARK : LIGHT
-  );
+  waterline({
+    theme,
+    width: 1280,
+    height: 400,
+    fs: 120,
+    inset: 32,
+    wordmark: 24,
+    foot: 20
+  });
 const social = (theme) =>
-  page(
-    `<div style="width:1200px;height:630px;padding:72px;display:grid;grid-template-columns:1fr 500px;gap:48px;align-items:center">
-      <div>
-        <div class="wordmark" style="font-size:28px">${mark(theme, 44)}<span>evidence-report-mcp</span></div>
-        <h1 style="font-size:76px;margin-top:52px">Evidence,<br>not verdicts.</h1>
-        <p style="margin-top:28px;font-size:25px">${TAGLINE}</p>
-        <p style="margin-top:36px;font-size:22px;font-family:var(--er-font-mono)">phun-ky.net/evidence-report-mcp</p>
-      </div>
-      ${report(NOT_CHECKED, 17)}
-    </div>`,
-    theme === 'dark' ? DARK : LIGHT
-  );
+  waterline({
+    theme,
+    width: 1200,
+    height: 630,
+    fs: 150,
+    inset: 56,
+    wordmark: 30,
+    foot: 24,
+    url: true
+  });
 /** The mark on the light ground, inset: a PNG can't follow the theme. */
 const icon = (size, inset) =>
   page(
