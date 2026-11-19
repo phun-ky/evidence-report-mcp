@@ -1,5 +1,10 @@
 # evidence-report-mcp
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/public/logo/banner-dark.png">
+  <img alt="evidence-report-mcp: Evidence, not verdicts. Beside it, a report for lodash 4.17.20 that failed with two high findings from OSV.dev and lists what was not checked." src="./docs/public/logo/banner-light.png">
+</picture>
+
 A sketch of a "trust layer" MCP server: one `verify` tool an agent calls
 _before_ acting on data it did not produce. It returns an evidence report, not a
 checkmark.
