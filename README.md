@@ -1,4 +1,4 @@
-# verify-mcp
+# evidence-report-mcp
 
 A sketch of a "trust layer" MCP server: one `verify` tool an agent calls
 _before_ acting on data it did not produce. It returns an evidence report, not a
@@ -6,12 +6,34 @@ checkmark.
 
 Companion to the talk _Invisible Data: Building Trust in the Age of AI_.
 
-## Run
+## Install
+
+Needs Node.js 22.12.0 or later.
+
+```sh
+claude mcp add evidence-report -- npx -y evidence-report-mcp
+```
+
+From a clone instead:
 
 ```sh
 npm install
 npm run build
-claude mcp add verify -- node /path/to/verify-mcp/dist/cli.js
+claude mcp add evidence-report -- node /path/to/evidence-report-mcp/dist/cli.js
+```
+
+The package also exports `verify`, `aggregate` and `createServer`, for use
+without MCP:
+
+```ts
+import { verify } from 'evidence-report-mcp';
+
+const report = await verify({
+  kind: 'package',
+  ecosystem: 'npm',
+  name: 'left-pad',
+  version: '1.3.0'
+});
 ```
 
 ## The tool
@@ -46,10 +68,10 @@ Install [c2patool](https://github.com/contentauth/c2pa-rs/releases) (tested with
 0.27.23, verify the release checksum) and point the server at it:
 
 ```sh
-claude mcp add verify \
-  -e VERIFY_MCP_C2PATOOL=/path/to/c2patool \
+claude mcp add evidence-report \
+  -e EVIDENCE_REPORT_MCP_C2PATOOL=/path/to/c2patool \
   -e C2PATOOL_TRUST_ANCHORS=/path/to/anchors.pem \
-  -- node /path/to/verify-mcp/dist/cli.js
+  -- npx -y evidence-report-mcp
 ```
 
 `C2PATOOL_TRUST_ANCHORS`, `C2PATOOL_TRUST_CONFIG` and `C2PATOOL_ALLOWED_LIST`
@@ -66,7 +88,7 @@ verdict stays `unknown`.
   "checks": [{ "id", "kind", "status", "source": { "name", "retrievedAt" }, "findings", "reason" }],
   "notChecked": ["Whether values are true, only whether they are well-formed", "…"],
   "generatedAt": "…",
-  "verifier": { "name": "verify-mcp", "version": "0.1.0" }
+  "verifier": { "name": "evidence-report-mcp", "version": "0.1.0" }
 }
 ```
 

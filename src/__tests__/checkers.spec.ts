@@ -252,11 +252,11 @@ test('checkOsv: malformed JSON -> error', async () => {
 let dir: string;
 
 before(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'verify-mcp-c2pa-'));
+  dir = await mkdtemp(join(tmpdir(), 'evidence-report-mcp-c2pa-'));
 });
 after(() => rm(dir, { recursive: true, force: true }));
 afterEach(() => {
-  delete process.env.VERIFY_MCP_C2PATOOL;
+  delete process.env.EVIDENCE_REPORT_MCP_C2PATOOL;
 });
 
 /** Installs a fake c2patool that records its argv and runs `body`. */
@@ -268,7 +268,7 @@ async function fakeC2patool(body: string): Promise<void> {
     `#!/bin/sh\nprintf '%s\\n' "$@" > "${dir}/args"\n${body}\n`,
     { mode: 0o755 }
   );
-  process.env.VERIFY_MCP_C2PATOOL = path;
+  process.env.EVIDENCE_REPORT_MCP_C2PATOOL = path;
 }
 
 const printJson = (j: unknown) => `cat <<'EOF'\n${JSON.stringify(j)}\nEOF`;
@@ -282,7 +282,7 @@ test('checkC2pa: not configured -> skipped', async () => {
   const r = await checkC2pa({ kind: 'file', path: '/tmp/x.jpg' });
 
   assert.equal(r.status, 'skipped');
-  assert.match(r.reason ?? '', /VERIFY_MCP_C2PATOOL/);
+  assert.match(r.reason ?? '', /EVIDENCE_REPORT_MCP_C2PATOOL/);
 });
 
 test('checkC2pa: Trusted -> pass; runs read-only with an absolute path and the trust subcommand', async () => {
@@ -364,7 +364,7 @@ test('checkC2pa: tool crash, unknown state, or a missing binary -> error', async
     (await checkC2pa({ kind: 'file', path: '/tmp/x.jpg' })).status,
     'error'
   );
-  process.env.VERIFY_MCP_C2PATOOL = join(dir, 'does-not-exist');
+  process.env.EVIDENCE_REPORT_MCP_C2PATOOL = join(dir, 'does-not-exist');
   assert.equal(
     (await checkC2pa({ kind: 'file', path: '/tmp/x.jpg' })).status,
     'error'

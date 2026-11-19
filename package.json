@@ -1,7 +1,51 @@
 {
-  "name": "verify-mcp",
+  "name": "evidence-report-mcp",
   "version": "0.1.0",
-  "description": "",
+  "description": "An MCP server with one verify tool: agents call it before acting on data they did not produce, and get an evidence report back, not a yes or no.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "verification",
+    "evidence",
+    "osv",
+    "json-schema",
+    "c2pa",
+    "provenance",
+    "agents"
+  ],
+  "homepage": "https://github.com/phun-ky/evidence-report-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/phun-ky/evidence-report-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phun-ky/evidence-report-mcp.git"
+  },
+  "license": "MIT",
+  "author": "Alexander Vassbotn Røyne-Helgesen <alexander@phun-ky.net>",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "bin": {
+    "evidence-report-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/**/__tests__",
+    "!src/test",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/cli.js",
@@ -15,9 +59,6 @@
     "prepare": "git config core.hooksPath .githooks || true",
     "test:hooks": "node --test scripts/__tests__/commit-msg.test.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
     "ajv": "^8.20.0",
@@ -30,9 +71,5 @@
     "prettier": "3.9.10",
     "tsx": "4.23.15",
     "typescript": "6.0.3"
-  },
-  "type": "module",
-  "bin": {
-    "verify-mcp": "dist/cli.js"
   }
 }
