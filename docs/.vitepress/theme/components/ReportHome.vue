@@ -916,7 +916,7 @@ h2.title {
 /* One report, four fields */
 .fields {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 160px;
 }
 
@@ -987,7 +987,7 @@ h2.title {
 /* Input tile, output tile */
 .split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding: 160px 12px 0;
 }
@@ -1140,6 +1140,50 @@ h2.title {
 
 .phone-only {
   display: none;
+}
+
+/* Tablets and narrow windows: two columns where there were four */
+@media (max-width: 1100px) {
+  /* Four board columns, without the outer two, and the stage across them */
+  .board {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .board > .col:nth-child(1),
+  .board > .col:nth-child(6) {
+    display: none;
+  }
+
+  .board > .col:nth-child(2) {
+    grid-column: 1;
+  }
+  .board > .col:nth-child(3) {
+    grid-column: 2;
+  }
+  .board > .col:nth-child(4) {
+    grid-column: 3;
+  }
+  .board > .col:nth-child(5) {
+    grid-column: 4;
+  }
+
+  .stage {
+    grid-column: 1 / -1;
+    margin: 72px 0 0;
+  }
+
+  .fields,
+  .cells {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .field {
+    min-height: 420px;
+  }
+
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 760px) {

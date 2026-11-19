@@ -120,3 +120,9 @@
 .VPHome {
   margin-bottom: 0 !important;
 }
+
+/* The Ctrl K hint makes the search button's visible text "SearchK", which its
+   accessible name can't contain (WCAG 2.5.3, decided on #24). Ctrl K still works. */
+.DocSearch-Button .DocSearch-Button-Keys {
+  display: none !important;
+}

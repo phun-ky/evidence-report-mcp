@@ -131,7 +131,11 @@ export default defineConfig({
         {
           text: 'API',
           link: '/api/',
-          items: typedocSidebar as DefaultTheme.SidebarItem[]
+          // Open groups: a collapsible group nests the caret button inside
+          // the group's own button, which fails WCAG 4.1.2 (#24)
+          items: (typedocSidebar as DefaultTheme.SidebarItem[]).map(
+            (group) => ({ ...group, collapsed: undefined })
+          )
         }
       ]
     },

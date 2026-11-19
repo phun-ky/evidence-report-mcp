@@ -6,7 +6,7 @@
 // which turns each PNG into a palette image to keep it small.
 // Usage: node scripts/render-logo.mjs
 import { Buffer } from 'node:buffer';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import {
   copyFileSync,
   mkdtempSync,
@@ -17,9 +17,10 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import process from 'node:process';
 import { setTimeout as wait } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import { launchChrome } from './lib/chrome.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LOGO = join(ROOT, 'docs', 'public', 'logo');
@@ -183,58 +184,9 @@ const OUTPUTS = [
     scale: 1
   }
 ];
-const port = 9300 + Math.floor(Math.random() * 600);
-const chrome = spawn(process.env.CHROME ?? 'google-chrome', [
-  '--headless=new',
-  '--disable-gpu',
-  '--no-sandbox',
-  '--hide-scrollbars',
-  `--remote-debugging-port=${port}`,
-  `--user-data-dir=${join(work, 'profile')}`,
-  'about:blank'
-]);
+const { send, close } = await launchChrome();
 
 try {
-  let target;
-
-  for (let i = 0; i < 50 && !target; i++) {
-    await wait(200);
-
-    try {
-      const list = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
-
-      target = list.find((entry) => entry.type === 'page');
-    } catch {
-      // Chrome isn't listening yet
-    }
-  }
-
-  if (!target) throw new Error('Chrome did not start');
-
-  const ws = new WebSocket(target.webSocketDebuggerUrl);
-
-  await new Promise((resolve) =>
-    ws.addEventListener('open', resolve, { once: true })
-  );
-
-  let id = 0;
-
-  const send = (method, params = {}) =>
-    new Promise((resolve) => {
-      const mine = ++id;
-      const onMessage = (event) => {
-        const message = JSON.parse(event.data);
-
-        if (message.id !== mine) return;
-
-        ws.removeEventListener('message', onMessage);
-        resolve(message.result);
-      };
-
-      ws.addEventListener('message', onMessage);
-      ws.send(JSON.stringify({ id: mine, method, params }));
-    });
-
   await send('Page.enable');
 
   for (const output of OUTPUTS) {
@@ -261,10 +213,8 @@ try {
 
     writeFileSync(join(LOGO, output.file), Buffer.from(data, 'base64'));
   }
-
-  ws.close();
 } finally {
-  chrome.kill();
+  await close();
   rmSync(work, { recursive: true, force: true });
 }
 
