@@ -4,7 +4,13 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { aggregate, createServer, verify } from '../server.js';
+import {
+  aggregate,
+  createServer,
+  verify,
+  type EvidenceReport,
+  type Target
+} from '../server.js';
 import type { CheckKind, CheckResult, CheckStatus } from '../types.js';
 
 const check = (
@@ -69,11 +75,13 @@ test('aggregate: nothing required, nothing run -> unknown, never pass', () => {
 });
 
 test('verify: report always carries non-empty notChecked and sourced checks', async () => {
-  const report = await verify({
+  // Typed with the types the package exports
+  const target: Target = {
     kind: 'dataset',
     schema: { type: 'object', required: ['id'] },
     records: [{ id: 1 }]
-  });
+  };
+  const report: EvidenceReport = await verify(target);
 
   // schema passes, observability is a stub that skips -> fail closed
   assert.equal(report.verdict, 'unknown');
