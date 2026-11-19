@@ -123,26 +123,28 @@ npm run check:pack
 hooks described under
 [Developer Certificate of Origin](#developer-certificate-of-origin).
 
-| Command                   | What it does                                                                                                                                             |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run build`           | Compiles `src` to `dist`: JavaScript, declarations and source maps, without the tests                                                                    |
-| `npm start`               | Starts the MCP server over stdio, from `dist`                                                                                                            |
-| `npm test`                | Runs the tests                                                                                                                                           |
-| `npm run test:ci`         | Runs the tests with coverage, as CI does                                                                                                                 |
-| `npm run typecheck`       | Type-checks the source and the tests                                                                                                                     |
-| `npm run lint`            | Lints TypeScript, JavaScript and Markdown with ESLint; `lint:fix` fixes what it can                                                                      |
-| `npm run format:check`    | Checks formatting with Prettier, JSON and YAML included; `format` fixes it                                                                               |
-| `npm run check:pack`      | After `build`: packs the package, lints it, installs it in an empty project, imports it, runs the bin and the README's examples, and checks dependencies |
-| `npm run test:hooks`      | Tests the commit hooks                                                                                                                                   |
-| `npm run test:readme`     | Tests the README examples check                                                                                                                          |
-| `npm run docs:dev`        | Serves the docs site with live reload                                                                                                                    |
-| `npm run docs:build`      | Builds the docs site, after generating the API pages with TypeDoc                                                                                        |
-| `npm run docs:preview`    | Serves the built docs site                                                                                                                               |
-| `npm run docs:check`      | Checks the API documentation comments with TypeDoc                                                                                                       |
-| `npm run check:site`      | After `docs:build`: loads every page in headless Chrome and checks requests, accessibility, links and layout                                             |
-| `npm run test:site`       | Tests the site checks                                                                                                                                    |
-| `npm run render:logo`     | Redraws the logo PNGs from the SVGs and design tokens; needs Chrome and Python with Pillow                                                               |
-| `npm run release:dry-run` | Shows whether merging would release, and the planned version and changelog                                                                               |
+| Command                       | What it does                                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run build`               | Compiles `src` to `dist`: JavaScript, declarations and source maps, without the tests                                                                      |
+| `npm start`                   | Starts the MCP server over stdio, from `dist`                                                                                                              |
+| `npm test`                    | Runs the tests                                                                                                                                             |
+| `npm run test:ci`             | Runs the tests with coverage, as CI does                                                                                                                   |
+| `npm run typecheck`           | Type-checks the source and the tests                                                                                                                       |
+| `npm run lint`                | Lints TypeScript, JavaScript and Markdown with ESLint; `lint:fix` fixes what it can                                                                        |
+| `npm run format:check`        | Checks formatting with Prettier, JSON and YAML included; `format` fixes it                                                                                 |
+| `npm run check:pack`          | After `build`: packs the package, lints it, installs it in an empty project, imports it, runs the bin and the README's examples, and checks dependencies   |
+| `npm run check:bestpractices` | Checks `.bestpractices.json`: every answer has a valid status and a justification, and every repository link in it and in `security-insights.yml` resolves |
+| `npm run bestpractices:url`   | Prints bestpractices.dev links that propose the answers that differ from the saved project; `--level passing` or `silver`                                  |
+| `npm run test:hooks`          | Tests the commit hooks                                                                                                                                     |
+| `npm run test:readme`         | Tests the README examples check                                                                                                                            |
+| `npm run docs:dev`            | Serves the docs site with live reload                                                                                                                      |
+| `npm run docs:build`          | Builds the docs site, after generating the API pages with TypeDoc                                                                                          |
+| `npm run docs:preview`        | Serves the built docs site                                                                                                                                 |
+| `npm run docs:check`          | Checks the API documentation comments with TypeDoc                                                                                                         |
+| `npm run check:site`          | After `docs:build`: loads every page in headless Chrome and checks requests, accessibility, links and layout                                               |
+| `npm run test:site`           | Tests the site checks                                                                                                                                      |
+| `npm run render:logo`         | Redraws the logo PNGs from the SVGs and design tokens; needs Chrome and Python with Pillow                                                                 |
+| `npm run release:dry-run`     | Shows whether merging would release, and the planned version and changelog                                                                                 |
 
 `check:site`, `test:site` and `render:logo` need Google Chrome, or
 `CHROME=/path/to/chrome`.
