@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/public/logo/banner-dark.png">
-  <img alt="evidence-report-mcp: Evidence, not verdicts. Beside it, a report for lodash 4.17.20 that failed with two high findings from OSV.dev and lists what was not checked." src="./docs/public/logo/banner-light.png">
+  <img alt="evidence-report-mcp: Unknown is not pass. The headline is cut by a line: checked above it, not checked below. An MCP server that tells agents what was checked, where it came from, and what was not." src="./docs/public/logo/banner-light.png">
 </picture>
 
 A "trust layer" MCP server: one `verify` tool an agent calls _before_ acting on

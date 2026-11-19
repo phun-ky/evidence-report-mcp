@@ -38,11 +38,7 @@ const broken = {
   contrast: ['<p style="color: #bbbbbb">Too faint to read</p>', 'axe'],
   'broken-anchor': ['<p><a href="/s/#nowhere">Nowhere</a></p>', 'links'],
   'broken-link': ['<p><a href="/s/missing">Missing</a></p>', 'links'],
-  overflow: ['<div style="width: 2000px">Too wide</div>', 'overflow'],
-  board: [
-    '<div class="board" style="display: grid; height: 600px; overflow: hidden"><div class="col"><p>Short</p></div></div>',
-    'board'
-  ]
+  overflow: ['<div style="width: 2000px">Too wide</div>', 'overflow']
 };
 
 writeFileSync(join(dir, 'index.html'), page());
@@ -67,7 +63,7 @@ describe('scripts/check-site.mjs', () => {
     );
 
   test('checks every page and exits 1 when any has a problem', () => {
-    assert.match(result.stdout, /^8 page\(s\) in .+: \d+ problem\(s\)$/m);
+    assert.match(result.stdout, /^7 page\(s\) in .+: \d+ problem\(s\)$/m);
     assert.equal(result.status, 1, result.stderr);
   });
 

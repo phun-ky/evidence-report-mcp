@@ -10,7 +10,7 @@ const SITE = 'https://phun-ky.net/evidence-report-mcp/';
 const DESCRIPTION =
   'An MCP server with one tool, verify. Agents call it before acting on something they did not make, and get back what was checked, where it came from, and what was not checked.';
 const SOCIAL_ALT =
-  'evidence-report-mcp: Evidence, not verdicts. Beside it, a report for lodash 4.17.20 that failed with two high findings from OSV.dev and lists what was not checked.';
+  'evidence-report-mcp: Unknown is not pass. The headline is cut by a line: checked above it, not checked below. An MCP server that tells agents what was checked, where it came from, and what was not.';
 
 export default defineConfig({
   base: '/evidence-report-mcp/',

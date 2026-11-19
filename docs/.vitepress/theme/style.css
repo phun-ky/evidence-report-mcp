@@ -1,7 +1,8 @@
 /*
- * Direction D on VitePress's default theme: the --er-* tokens (tokens.css)
- * mapped onto the theme's own variables, square corners, Work Sans. The
- * tokens switch on .dark, so one mapping serves both themes.
+ * Direction C on VitePress's default theme: the --er-* tokens (tokens.css)
+ * mapped onto the theme's own variables, square corners, Big Shoulders for
+ * headings and Public Sans for text. The tokens switch on .dark, so one
+ * mapping serves both themes.
  */
 :root,
 .dark {
@@ -10,7 +11,7 @@
 
   --vp-c-bg: var(--er-bg);
   --vp-c-bg-alt: var(--er-surface);
-  --vp-c-bg-elv: var(--er-panel);
+  --vp-c-bg-elv: var(--er-bg);
   --vp-c-bg-soft: var(--er-surface);
 
   --vp-c-text-1: var(--er-ink);
@@ -24,7 +25,7 @@
   --vp-c-brand-1: var(--er-link);
   --vp-c-brand-2: var(--er-link);
   --vp-c-brand-3: var(--er-accent);
-  --vp-c-brand-soft: var(--er-note-bg);
+  --vp-c-brand-soft: var(--er-surface);
 
   --vp-button-brand-bg: var(--er-accent);
   --vp-button-brand-hover-bg: var(--er-accent);
@@ -37,20 +38,20 @@
   --vp-code-bg: var(--er-surface);
   --vp-code-color: var(--er-ink);
   --vp-code-block-bg: var(--er-surface);
-  --vp-code-copy-code-bg: var(--er-panel);
-  --vp-code-copy-code-hover-bg: var(--er-panel);
+  --vp-code-copy-code-bg: var(--er-bg);
+  --vp-code-copy-code-hover-bg: var(--er-bg);
 
   --vp-custom-block-tip-bg: var(--er-note-bg);
   --vp-custom-block-tip-text: var(--er-note-ink);
-  --vp-custom-block-tip-code-bg: var(--er-panel);
+  --vp-custom-block-tip-code-bg: var(--er-note-code-bg);
   --vp-custom-block-info-bg: var(--er-surface);
   --vp-custom-block-info-text: var(--er-ink);
   --vp-custom-block-warning-bg: var(--er-unknown-bg);
   --vp-custom-block-warning-text: var(--er-unknown-ink);
-  --vp-custom-block-warning-code-bg: var(--er-panel);
+  --vp-custom-block-warning-code-bg: var(--er-bg);
   --vp-custom-block-danger-bg: var(--er-fail-bg);
   --vp-custom-block-danger-text: var(--er-fail-ink);
-  --vp-custom-block-danger-code-bg: var(--er-panel);
+  --vp-custom-block-danger-code-bg: var(--er-bg);
 
   --vp-nav-bg-color: var(--er-bg);
   --vp-sidebar-bg-color: var(--er-surface);
@@ -70,28 +71,59 @@
   border-radius: var(--er-radius) !important;
 }
 
-/* The site title: the wordmark's weight and tracking */
-.VPNavBarTitle .title {
-  font-weight: var(--er-weight-strong);
-  letter-spacing: -0.01em;
+/* The tip is a navy note: its links and code take the note's ink, not the
+   brand colour, which is navy too */
+.vp-doc .custom-block.tip a,
+.vp-doc .custom-block.tip code {
+  color: var(--er-note-ink);
 }
 
-/* Display type for page titles, as on the home page */
-.vp-doc h1 {
+/* The wordmark: Big Shoulders in capitals, as on the home page */
+.VPNavBarTitle .title {
+  font-family: var(--er-font-display);
+  font-weight: var(--er-weight-display);
+  font-size: 24px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* Headings in the display face. They keep their case: API names such as
+   EvidenceReport must read as written */
+.vp-doc h1,
+.vp-doc h2 {
+  font-family: var(--er-font-display);
   font-weight: var(--er-weight-display);
   letter-spacing: var(--er-tracking-display);
-  line-height: 1.05;
-  font-size: 44px;
+}
+
+.vp-doc h1 {
+  font-size: 64px;
+  line-height: 0.95;
 }
 
 .vp-doc h2 {
-  font-weight: var(--er-weight-display);
-  letter-spacing: -0.02em;
+  font-size: 36px;
+  line-height: 1.1;
   border-top-color: var(--er-table-line);
+}
+
+@media (max-width: 760px) {
+  .VPNavBarTitle .title {
+    font-size: 20px;
+  }
+
+  .vp-doc h1 {
+    font-size: 48px;
+  }
 }
 
 .vp-doc a {
   text-underline-offset: 3px;
+}
+
+/* The link colour is the ink in light, so the current page also gets weight */
+.VPSidebarItem.is-active > .item .text {
+  font-weight: var(--er-weight-strong);
 }
 
 /* Verdict chips used in the guide */
@@ -116,7 +148,7 @@
   color: var(--er-unknown-ink);
 }
 
-/* The home page ends in the large mark; no gap before the footer */
+/* The home page ends in the name band; no gap before the footer */
 .VPHome {
   margin-bottom: 0 !important;
 }
