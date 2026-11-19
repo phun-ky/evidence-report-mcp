@@ -1,0 +1,122 @@
+/*
+ * Direction D on VitePress's default theme: the --er-* tokens (tokens.css)
+ * mapped onto the theme's own variables, square corners, Work Sans. The
+ * tokens switch on .dark, so one mapping serves both themes.
+ */
+:root,
+.dark {
+  --vp-font-family-base: var(--er-font-text);
+  --vp-font-family-mono: var(--er-font-mono);
+
+  --vp-c-bg: var(--er-bg);
+  --vp-c-bg-alt: var(--er-surface);
+  --vp-c-bg-elv: var(--er-panel);
+  --vp-c-bg-soft: var(--er-surface);
+
+  --vp-c-text-1: var(--er-ink);
+  --vp-c-text-2: var(--er-muted);
+  --vp-c-text-3: var(--er-muted);
+
+  --vp-c-divider: var(--er-table-line);
+  --vp-c-gutter: var(--er-table-line);
+  --vp-c-border: var(--er-table-line);
+
+  --vp-c-brand-1: var(--er-link);
+  --vp-c-brand-2: var(--er-link);
+  --vp-c-brand-3: var(--er-accent);
+  --vp-c-brand-soft: var(--er-note-bg);
+
+  --vp-button-brand-bg: var(--er-accent);
+  --vp-button-brand-hover-bg: var(--er-accent);
+  --vp-button-brand-active-bg: var(--er-accent);
+  --vp-button-brand-text: var(--er-accent-ink);
+  --vp-button-brand-hover-text: var(--er-accent-ink);
+  --vp-button-brand-active-text: var(--er-accent-ink);
+  --vp-button-brand-border: transparent;
+
+  --vp-code-bg: var(--er-surface);
+  --vp-code-color: var(--er-ink);
+  --vp-code-block-bg: var(--er-surface);
+  --vp-code-copy-code-bg: var(--er-panel);
+  --vp-code-copy-code-hover-bg: var(--er-panel);
+
+  --vp-custom-block-tip-bg: var(--er-note-bg);
+  --vp-custom-block-tip-text: var(--er-note-ink);
+  --vp-custom-block-tip-code-bg: var(--er-panel);
+  --vp-custom-block-info-bg: var(--er-surface);
+  --vp-custom-block-info-text: var(--er-ink);
+  --vp-custom-block-warning-bg: var(--er-unknown-bg);
+  --vp-custom-block-warning-text: var(--er-unknown-ink);
+  --vp-custom-block-warning-code-bg: var(--er-panel);
+  --vp-custom-block-danger-bg: var(--er-fail-bg);
+  --vp-custom-block-danger-text: var(--er-fail-ink);
+  --vp-custom-block-danger-code-bg: var(--er-panel);
+
+  --vp-nav-bg-color: var(--er-bg);
+  --vp-sidebar-bg-color: var(--er-surface);
+  --vp-local-nav-bg-color: var(--er-bg);
+}
+
+/* Square corners everywhere */
+.VPButton,
+.VPNavBarSearch .DocSearch-Button,
+.vp-doc div[class*='language-'],
+.vp-doc .custom-block,
+.vp-doc :not(pre) > code,
+.VPLocalSearchBox .shell,
+.VPFlyout .menu,
+.VPMenu,
+.VPDocFooter .pager-link {
+  border-radius: var(--er-radius) !important;
+}
+
+/* The site title: the wordmark's weight and tracking */
+.VPNavBarTitle .title {
+  font-weight: var(--er-weight-strong);
+  letter-spacing: -0.01em;
+}
+
+/* Display type for page titles, as on the home page */
+.vp-doc h1 {
+  font-weight: var(--er-weight-display);
+  letter-spacing: var(--er-tracking-display);
+  line-height: 1.05;
+  font-size: 44px;
+}
+
+.vp-doc h2 {
+  font-weight: var(--er-weight-display);
+  letter-spacing: -0.02em;
+  border-top-color: var(--er-table-line);
+}
+
+.vp-doc a {
+  text-underline-offset: 3px;
+}
+
+/* Verdict chips used in the guide */
+.verdict {
+  display: inline-block;
+  padding: 0 0.45em;
+  font-weight: var(--er-weight-strong);
+}
+
+.verdict.pass {
+  background: var(--er-pass-bg);
+  color: var(--er-pass-ink);
+}
+
+.verdict.fail {
+  background: var(--er-fail-bg);
+  color: var(--er-fail-ink);
+}
+
+.verdict.unknown {
+  background: var(--er-unknown-bg);
+  color: var(--er-unknown-ink);
+}
+
+/* The home page ends in the large mark; no gap before the footer */
+.VPHome {
+  margin-bottom: 0 !important;
+}
