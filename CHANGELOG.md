@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.5.0...0.6.0) (2026-11-20)
+
+### Feature
+
+* 🎸 check each claim source's quote on its page ([2f1e819](https://github.com/phun-ky/evidence-report-mcp/commit/2f1e819a9cf68af6a95ad2832d7897ab92f6cf4c)), closes [#64](https://github.com/phun-ky/evidence-report-mcp/issues/64)
+
+### Bug
+
+* 🐛 end page comments at --!> too, and match tags case-insensitively ([20306fc](https://github.com/phun-ky/evidence-report-mcp/commit/20306fc8ca80077eae27baacce7a0440b8b3da9b)), references [#64](https://github.com/phun-ky/evidence-report-mcp/issues/64)
+
 ## [0.5.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.4.1...0.5.0) (2026-11-20)
 
 ### Documentation
