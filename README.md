@@ -17,6 +17,7 @@
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16929/badge)](https://www.bestpractices.dev/projects/16929)
 [![OpenSSF Baseline](https://www.bestpractices.dev/projects/16929/baseline)](https://www.bestpractices.dev/projects/16929)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/phun-ky/evidence-report-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/phun-ky/evidence-report-mcp)
+[![evidence-report-mcp MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/phun-ky/evidence-report-mcp/badges/score.svg)](https://glama.ai/mcp/servers/phun-ky/evidence-report-mcp)
 
 A "trust layer" MCP server: one `verify` tool an agent calls _before_ acting on
 data it did not produce, such as a package, a lockfile, a dataset, a media file
