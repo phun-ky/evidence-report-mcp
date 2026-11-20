@@ -10,20 +10,16 @@ grouped in milestones.
 
 ### Checks that can pass
 
-Two checks are stubs today: they report `skipped`, so a dataset or a claim is
-never verified as `pass` yet.
+One check is a stub today: it reports `skipped`, so a claim is never verified as
+`pass` yet.
 
-- **The dataset observability adapter:** `observability.health` asks a real
-  source about the dataset's `assetId`, such as a data catalogue or a pipeline's
-  health, instead of skipping
-  ([#63](https://github.com/phun-ky/evidence-report-mcp/issues/63)).
 - **Claim corroboration:** `claim.corroboration` decides whether the given
   sources independently support the claim, from the sources' own records and
   without a language model, instead of skipping
   ([#64](https://github.com/phun-ky/evidence-report-mcp/issues/64)).
 
-Each issue names the sources considered; the source chosen and what the report
-says when it can't answer are decided there.
+Its issue records the source chosen and what the report says when that source
+can't answer.
 
 ### Project health
 

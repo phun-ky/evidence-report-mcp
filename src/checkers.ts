@@ -5,6 +5,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 
+import { dbtHealth } from './dbt.js';
 import { readDependencies, type Dependency } from './dependencies.js';
 import { osvSeverity, type OsvVuln } from './severity.js';
 import type { CheckResult, Finding, Target } from './types.js';
@@ -323,21 +324,31 @@ export function checkSchema(t: Of<'dataset'>): Promise<CheckResult> {
 /* ---------------- dataset: freshness/volume/lineage (observability) ---------------- */
 
 /**
- * Adapter point for Monte Carlo, Soda, Elementary, etc. Either call their
- * API directly, or have this server act as an MCP *client* to their server.
- * Until configured, this reports "skipped" (which keeps the verdict "unknown").
+ * Reads the dataset's health from dbt artifacts in EVIDENCE_REPORT_MCP_DBT_TARGET (a dbt
+ * target folder), with `assetId` as the dbt unique_id. Unconfigured, or without an
+ * assetId, it is "skipped", which keeps the verdict "unknown".
  */
 export function checkObservability(t: Of<'dataset'>): Promise<CheckResult> {
+  const dir = process.env.EVIDENCE_REPORT_MCP_DBT_TARGET;
+
   return timed(
     {
       id: 'observability.health',
       kind: 'deterministic',
-      source: { name: 'observability adapter' }
+      source: { name: dir ? 'dbt artifacts' : 'observability adapter' }
     },
-    async () =>
-      t.assetId
-        ? { status: 'skipped', reason: 'No observability provider configured' }
-        : { status: 'skipped', reason: 'No assetId given' }
+    async () => {
+      if (!t.assetId) return { status: 'skipped', reason: 'No assetId given' };
+
+      if (!dir)
+        return {
+          status: 'skipped',
+          reason:
+            'No observability provider configured (set EVIDENCE_REPORT_MCP_DBT_TARGET)'
+        };
+
+      return dbtHealth(resolve(dir), t.assetId);
+    }
   );
 }
 
@@ -508,7 +519,8 @@ export function plan(t: Target): Plan {
         notChecked: [
           'Whether values are true, only whether they are well-formed',
           'Meaning of units and labels beyond what the schema encodes',
-          'Records outside the provided sample'
+          'Records outside the provided sample',
+          'Data quality beyond the dbt tests on the node'
         ]
       };
     case 'file':

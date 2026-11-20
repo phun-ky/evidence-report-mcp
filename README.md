@@ -97,7 +97,7 @@ console.log(report.summary); // Failed: 1/1 checks completed, 4 finding(s).
   [media files](https://phun-ky.net/evidence-report-mcp/guide/checks/file) and
   [claims](https://phun-ky.net/evidence-report-mcp/guide/checks/claim)
 - [Configuration](https://phun-ky.net/evidence-report-mcp/guide/configuration),
-  including `c2patool` for media files
+  including `c2patool` for media files and dbt for datasets
 - [API reference](https://phun-ky.net/evidence-report-mcp/api/)
 - [Security policy](./SECURITY.md) and [assurance case](./ASSURANCE.md)
 - [Contributing](./CONTRIBUTING.md), [governance](./GOVERNANCE.md),

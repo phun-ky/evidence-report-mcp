@@ -58,15 +58,18 @@ not make a target safe, and a report is only as good as the checks behind it.
 
 What you can rely on:
 
-- **Read-only.** The server writes no files and changes nothing. The only
-  process it starts is `c2patool`, with the `trust` subcommand, which reads the
-  file and writes nothing.
+- **Read-only.** The server writes no files and changes nothing. It reads the
+  file at a `dependencies` target's `path`, and the dbt artifacts in
+  `EVIDENCE_REPORT_MCP_DBT_TARGET`. The only process it starts is `c2patool`,
+  with the `trust` subcommand, which reads the file and writes nothing.
 - **One network destination.** For a `package` target the server sends the
-  package name, ecosystem and version to `https://api.osv.dev/v1/query`, with a
-  10 second timeout per request and at most 10 pages of results. Nothing else is
-  sent anywhere: the source URLs of a `claim` target are parsed for their host
-  name and never fetched, and JSON Schema `$ref`s are never loaded from the
-  network.
+  package name, ecosystem and version to `https://api.osv.dev/v1/query`, with at
+  most 10 pages of results. For a `dependencies` target it sends each package's
+  name and version, or its purl, to `https://api.osv.dev/v1/querybatch`, and the
+  id of each advisory found to `https://api.osv.dev/v1/vulns/{id}`. Every
+  request has a 10 second timeout. Nothing else is sent anywhere: the source
+  URLs of a `claim` target are parsed for their host name and never fetched, and
+  JSON Schema `$ref`s are never loaded from the network.
 - **No listening port.** The server talks to its client over stdio only.
 - **No data collection.** There is no telemetry.
 - **Fail closed.** A check that throws is reported as `error`, and a required
@@ -86,22 +89,25 @@ What you can't rely on:
   sources at the time in `retrievedAt`. Each report lists what it did not check
   in `notChecked`; read it before acting.
 - **Limits on file paths.** A `file` target can name any file the server process
-  can read, and `c2patool` reads it. When `c2patool` fails, its error message,
+  can read, and `c2patool` reads it; so can a `dependencies` target's `path`,
+  which the server reads (up to 10 MB). When reading fails, the error message,
   which can name the file, is returned in the check's `reason`. Run the server
   with no more rights than it needs.
 - **Safety with hostile schemas.** Ajv's
   [security model](https://ajv.js.org/security.html) treats schemas as trusted
   as application code, and here the schema comes from the agent. A very deep or
   large schema can be slow to compile or overflow the stack, and a `pattern`
-  runs as a JavaScript regular expression, so it can make validation slow. There
-  are no limits on the number of records or the size of a schema, schema
-  validation has no timeout, and there are no rate limits.
+  runs as a JavaScript regular expression, so it can make validation slow. The
+  input is limited (a schema nested at most 32 deep and at most 100 KB, at most
+  1000 records and 1 MB of them; see the guide), but schema validation has no
+  timeout, and there are no rate limits.
 - **The sources themselves.** OSV.dev results are reported as OSV.dev returns
   them, over HTTPS. The `c2patool` binary and its trust settings
   (`C2PATOOL_TRUST_ANCHORS`, `C2PATOOL_TRUST_CONFIG`, `C2PATOOL_ALLOWED_LIST`)
-  are trusted as configured by whoever runs the server.
-- **Privacy of package names.** Package names and versions checked are sent to
-  OSV.dev.
+  are trusted as configured by whoever runs the server, and so are the dbt
+  artifacts in `EVIDENCE_REPORT_MCP_DBT_TARGET`.
+- **Privacy of package names.** Package names and versions checked, including
+  every package in a lockfile or SBOM, are sent to OSV.dev.
 
 ## Verifying Releases
 
