@@ -113,3 +113,12 @@ test('limits: records at most 1 MB as JSON, and at most 1000 of them', () => {
     )
   );
 });
+
+test('dependencies: exactly one of path or content, content at most 10 MB', () => {
+  ok({ kind: 'dependencies', path: 'package-lock.json' });
+  ok({ kind: 'dependencies', content: 'a'.repeat(10 * 1024 * 1024) });
+  rejected({ kind: 'dependencies' });
+  rejected({ kind: 'dependencies', path: 'a', content: '{}' });
+  rejected({ kind: 'dependencies', content: 'a'.repeat(10 * 1024 * 1024 + 1) });
+  rejected({ kind: 'dependencies', path: 'a'.repeat(4097) });
+});

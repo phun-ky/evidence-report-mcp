@@ -19,9 +19,9 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/phun-ky/evidence-report-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/phun-ky/evidence-report-mcp)
 
 A "trust layer" MCP server: one `verify` tool an agent calls _before_ acting on
-data it did not produce, such as a package, a dataset, a media file or a claim.
-It returns an evidence report, not a checkmark: what was checked, where each
-result came from and when, and what was not checked.
+data it did not produce, such as a package, a lockfile, a dataset, a media file
+or a claim. It returns an evidence report, not a checkmark: what was checked,
+where each result came from and when, and what was not checked.
 
 Companion to the talk
 [_Invisible Data: Building Trust in the Age of AI_](https://slides.com/phun-ky/invisible-data-building-trust-in-the-age-of-ai).
@@ -92,6 +92,7 @@ console.log(report.summary); // Failed: 1/1 checks completed, 4 finding(s).
   every field, and how the verdict is worked out
 - The checks:
   [packages](https://phun-ky.net/evidence-report-mcp/guide/checks/package),
+  [lockfiles and SBOMs](https://phun-ky.net/evidence-report-mcp/guide/checks/dependencies),
   [datasets](https://phun-ky.net/evidence-report-mcp/guide/checks/dataset),
   [media files](https://phun-ky.net/evidence-report-mcp/guide/checks/file) and
   [claims](https://phun-ky.net/evidence-report-mcp/guide/checks/claim)

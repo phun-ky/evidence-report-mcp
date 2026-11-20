@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, truncate, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, afterEach, before, beforeEach, mock, test } from 'node:test';
@@ -7,6 +7,7 @@ import { after, afterEach, before, beforeEach, mock, test } from 'node:test';
 import {
   checkC2pa,
   checkCorroboration,
+  checkDependencies,
   checkObservability,
   checkOsv,
   checkSchema,
@@ -409,6 +410,233 @@ test('checkCorroboration: two domains -> skipped, never pass', async () => {
   assert.equal(r.status, 'skipped');
 });
 
+/* ---------------- dependencies (fetch mocked) ---------------- */
+
+const lockfile = (...pkgs: [string, string][]) =>
+  JSON.stringify({
+    lockfileVersion: 3,
+    packages: {
+      '': { name: 'app' },
+      ...Object.fromEntries(
+        pkgs.map(([name, version]) => [
+          `node_modules/${name}`,
+          { version, resolved: `https://registry.npmjs.org/${name}.tgz` }
+        ])
+      )
+    }
+  });
+const deps = (content: string) =>
+  checkDependencies({ kind: 'dependencies', content });
+/** OSV mock: querybatch answers from `vulnsFor` per package name, /vulns/{id} from `details`. */
+const mockOsv = (
+  vulnsFor: Record<string, string[]>,
+  details: Record<string, object> = {}
+) =>
+  mockFetch(async (url, init) => {
+    if (url.endsWith('/v1/querybatch')) {
+      const { queries } = JSON.parse(String(init?.body)) as {
+        queries: { package: { name: string } }[];
+      };
+
+      return Response.json({
+        // OSV leaves out `vulns` for a clean package
+        results: queries.map((q) => {
+          const ids = vulnsFor[q.package.name];
+
+          return ids ? { vulns: ids.map((id) => ({ id })) } : {};
+        })
+      });
+    }
+
+    const id = decodeURIComponent(url.split('/').pop()!);
+
+    return Response.json({ id, ...details[id] });
+  });
+
+test('checkDependencies: no advisories -> pass, one batch query, no advisory lookups', async () => {
+  const f = mockOsv({});
+  const r = await deps(lockfile(['lodash', '4.17.21'], ['ms', '2.1.3']));
+
+  assert.equal(r.status, 'pass');
+  assert.equal(r.id, 'osv.vulnerabilities');
+  assert.equal(f.mock.callCount(), 1);
+
+  const [url, init] = f.mock.calls[0]!.arguments;
+
+  assert.equal(url, 'https://api.osv.dev/v1/querybatch');
+  assert.deepEqual(JSON.parse(String(init?.body)).queries[0], {
+    package: { name: 'lodash', ecosystem: 'npm' },
+    version: '4.17.21'
+  });
+});
+
+test('checkDependencies: advisories -> fail, each advisory fetched once, findings name the package', async () => {
+  const f = mockOsv(
+    { a: ['GHSA-1'], b: ['GHSA-1', 'GHSA-2'] },
+    {
+      'GHSA-1': { summary: 'Bad', database_specific: { severity: 'LOW' } },
+      'GHSA-2': {}
+    }
+  );
+  const r = await deps(
+    lockfile(['a', '1.0.0'], ['b', '2.0.0'], ['c', '3.0.0'])
+  );
+
+  assert.equal(r.status, 'fail');
+  assert.equal(f.mock.callCount(), 3);
+  assert.deepEqual(
+    r.findings.map((x) => [x.ref, x.severity, x.message]),
+    [
+      ['GHSA-1', 'low', 'a@1.0.0: Bad'],
+      ['GHSA-1', 'low', 'b@2.0.0: Bad'],
+      [
+        'GHSA-2',
+        'high',
+        'b@2.0.0: Known vulnerability (severity not provided; assumed high)'
+      ]
+    ]
+  );
+});
+
+test('checkDependencies: an entry OSV cannot look up -> skipped with an info finding, never pass', async () => {
+  mockOsv({});
+
+  const lock = JSON.parse(lockfile(['a', '1.0.0'])) as {
+    packages: Record<string, object>;
+  };
+
+  lock.packages['node_modules/g'] = {
+    version: '1.0.0',
+    resolved: 'git+https://x/g.git'
+  };
+
+  const r = await deps(JSON.stringify(lock));
+
+  assert.equal(r.status, 'skipped');
+  assert.equal(r.reason, '1 of 2 entries could not be looked up on OSV');
+  assert.deepEqual(r.findings, [
+    {
+      severity: 'info',
+      message:
+        'g@1.0.0: not looked up (not from a registry: git+https://x/g.git)'
+    }
+  ]);
+});
+
+test('checkDependencies: unresolved entries do not hide a known vulnerability -> fail', async () => {
+  mockOsv({ a: ['GHSA-1'] });
+
+  const r = await deps(
+    JSON.stringify({
+      lockfileVersion: 3,
+      packages: {
+        'node_modules/a': { version: '1.0.0' },
+        'node_modules/v': {}
+      }
+    })
+  );
+
+  assert.equal(r.status, 'fail');
+  assert.deepEqual(
+    r.findings.map((x) => x.severity),
+    ['high', 'info']
+  );
+});
+
+test('checkDependencies: no packages -> skipped', async () => {
+  const r = await deps(lockfile());
+
+  assert.equal(r.status, 'skipped');
+  assert.equal(r.reason, 'No packages found');
+});
+
+test('checkDependencies: more than 1000 packages -> batches of 1000', async () => {
+  const f = mockOsv({});
+  const many = Array.from(
+    { length: 1001 },
+    (_, i) => [`p${i}`, '1.0.0'] as [string, string]
+  );
+  const r = await deps(lockfile(...many));
+
+  assert.equal(r.status, 'pass');
+  assert.deepEqual(
+    f.mock.calls.map(
+      (c) => JSON.parse(String(c.arguments[1]?.body)).queries.length
+    ),
+    [1000, 1]
+  );
+});
+
+test('checkDependencies: a paginated batch result -> error, never a partial list', async () => {
+  mockFetch(async () =>
+    Response.json({ results: [{ vulns: [{ id: 'A' }], next_page_token: 't' }] })
+  );
+
+  const r = await deps(lockfile(['a', '1.0.0']));
+
+  assert.equal(r.status, 'error');
+  assert.match(r.reason ?? '', /more results for a@1.0.0/);
+});
+
+test('checkDependencies: fewer results than queries -> error', async () => {
+  mockFetch(async () => Response.json({}));
+
+  const r = await deps(lockfile(['a', '1.0.0']));
+
+  assert.equal(r.status, 'error');
+  assert.equal(r.reason, 'OSV returned 0 results for 1 queries');
+});
+
+test('checkDependencies: an advisory lookup failing -> error', async () => {
+  mockFetch(async (url) =>
+    url.endsWith('/querybatch')
+      ? Response.json({ results: [{ vulns: [{ id: 'A' }] }] })
+      : new Response('gone', { status: 404 })
+  );
+
+  const r = await deps(lockfile(['a', '1.0.0']));
+
+  assert.equal(r.status, 'error');
+  assert.equal(r.reason, 'OSV responded 404');
+});
+
+test('checkDependencies: not a lockfile or an SBOM -> error', async () => {
+  const r = await deps('{"name":"x"}');
+
+  assert.equal(r.status, 'error');
+  assert.match(r.reason ?? '', /Not a package-lock.json or a CycloneDX/);
+});
+
+test('checkDependencies: reads a path read-only; missing or over 10 MB -> error', async () => {
+  mockOsv({});
+
+  const path = join(dir, 'package-lock.json');
+
+  await writeFile(path, lockfile(['a', '1.0.0']));
+  assert.equal(
+    (await checkDependencies({ kind: 'dependencies', path })).status,
+    'pass'
+  );
+
+  const missing = await checkDependencies({
+    kind: 'dependencies',
+    path: join(dir, 'nope.json')
+  });
+
+  assert.equal(missing.status, 'error');
+  assert.match(missing.reason ?? '', /ENOENT/);
+
+  const big = join(dir, 'big.json');
+
+  await writeFile(big, '');
+  await truncate(big, 10 * 1024 * 1024 + 1);
+
+  const r = await checkDependencies({ kind: 'dependencies', path: big });
+
+  assert.equal(r.status, 'error');
+  assert.match(r.reason ?? '', /larger than 10 MB/);
+});
+
 /* ---------------- plan ---------------- */
 
 test('plan: every target kind has required checks and a non-empty notChecked', async () => {
@@ -418,7 +646,8 @@ test('plan: every target kind has required checks and a non-empty notChecked', a
     pkg,
     { kind: 'dataset', schema: {}, records: [{}] },
     { kind: 'file', path: '/tmp/x.jpg' },
-    { kind: 'claim', text: 'x', sources: [] }
+    { kind: 'claim', text: 'x', sources: [] },
+    { kind: 'dependencies', content: '{"lockfileVersion":3,"packages":{}}' }
   ];
 
   for (const t of targets) {
