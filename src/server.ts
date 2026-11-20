@@ -111,6 +111,7 @@ export function createServer(): McpServer {
       description: [
         'Run independent checks on a package, a lockfile or SBOM, a dataset, a media file or a claim and return an evidence report.',
         'Call this BEFORE acting on data you did not produce.',
+        'For a claim, give each source as { url, quote } with the sentence you rely on.',
         "Treat verdict 'unknown' as 'not verified'. Read 'notChecked' before telling a user something is safe or true."
       ].join(' '),
       inputSchema: { target: TargetSchema },

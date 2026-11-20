@@ -8,19 +8,6 @@ grouped in milestones.
 
 ## Planned
 
-### Checks that can pass
-
-One check is a stub today: it reports `skipped`, so a claim is never verified as
-`pass` yet.
-
-- **Claim corroboration:** `claim.corroboration` decides whether the given
-  sources independently support the claim, from the sources' own records and
-  without a language model, instead of skipping
-  ([#64](https://github.com/phun-ky/evidence-report-mcp/issues/64)).
-
-Its issue records the source chosen and what the report says when that source
-can't answer.
-
 ### Project health
 
 - **TypeScript 7**, once TypeDoc and typescript-eslint support it
@@ -36,6 +23,8 @@ first.
 
 - **Signed reports:** a report signed with Sigstore, so that other systems can
   trust the verifier's output and not only an agent's summary of it.
+- **Structured claims:** a deterministic check of claims that fit a subject,
+  property and value against Wikidata, the only way a claim could ever `pass`.
 - **More media checks:** ingredient manifests (earlier edits), which the C2PA
   check reports as not checked today.
 

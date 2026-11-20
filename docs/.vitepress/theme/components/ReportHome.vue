@@ -63,7 +63,7 @@ const kinds = [
   },
   {
     name: 'Claims',
-    text: 'Two independent source domains, at least.',
+    text: 'Each quote found on its source page, two domains at least.',
     small: 'Heuristic, so it can fail a claim but never pass one.',
     link: '/guide/checks/claim'
   }

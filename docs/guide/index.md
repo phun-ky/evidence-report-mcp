@@ -128,19 +128,19 @@ So that one call can't hold the server for long, the `verify` tool rejects a
 target over any of these limits before a check runs. The agent gets a validation
 error, not a report, and never a `pass`.
 
-| Field                        | Limit                                                          |
-| ---------------------------- | -------------------------------------------------------------- |
-| `name`, `version`, `assetId` | 256 characters                                                 |
-| `path`                       | 4096 characters                                                |
-| `content`                    | 10 MB, and a file read from `path` too                         |
-| `text`                       | 10 000 characters                                              |
-| `sources`                    | 20 URLs, each at most 2048 characters                          |
-| `schema`                     | nested at most 32 deep, at most 100 KB as JSON                 |
-| `records`                    | 1000 records, each nested at most 32 deep, 1 MB as JSON in all |
+| Field                        | Limit                                                            |
+| ---------------------------- | ---------------------------------------------------------------- |
+| `name`, `version`, `assetId` | 256 characters                                                   |
+| `path`                       | 4096 characters                                                  |
+| `content`                    | 10 MB, and a file read from `path` too                           |
+| `text`                       | 10 000 characters                                                |
+| `sources`                    | 20 URLs, each at most 2048 characters, each `quote` at most 1000 |
+| `schema`                     | nested at most 32 deep, at most 100 KB as JSON                   |
+| `records`                    | 1000 records, each nested at most 32 deep, 1 MB as JSON in all   |
 
 ## What is not there yet
 
-- The claim check's source matching is a stub: it reports `skipped`, so a claim
-  is never verified as `pass` yet. Its page says what it does today.
-- An idea for later: a signed report (Sigstore), so that other systems can trust
-  the verifier's output and not only the agent's summary of it.
+- A claim is never verified as `pass`: its only check is heuristic. Ideas for
+  later: a deterministic check of structured claims, and a signed report
+  (Sigstore), so that other systems can trust the verifier's output and not only
+  the agent's summary of it.

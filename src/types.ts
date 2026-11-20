@@ -66,8 +66,22 @@ export const FileTarget = z.object({
 export const ClaimTarget = z.object({
   kind: z.literal('claim'),
   text: z.string().min(1).max(10_000),
-  /** Sources the agent is relying on. Never verified against the agent's own output. */
-  sources: z.array(z.string().url().max(2048)).max(20).default([])
+  /**
+   * Sources the agent is relying on: a URL, or a URL and the sentence on that
+   * page the agent relies on. Never verified against the agent's own output.
+   */
+  sources: z
+    .array(
+      z.union([
+        z.string().url().max(2048),
+        z.object({
+          url: z.string().url().max(2048),
+          quote: z.string().min(1).max(1000)
+        })
+      ])
+    )
+    .max(20)
+    .default([])
 });
 
 export const DependenciesTarget = z
