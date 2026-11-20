@@ -160,7 +160,7 @@ async function getVulns(ids: string[]): Promise<Map<string, OsvVuln>> {
 
 /**
  * Every package in a package-lock.json or a CycloneDX file, looked up on
- * OSV.dev in batches. An entry OSV can't look up (a link, a git or file
+ * OSV.dev in batches. An entry OSV can't look up (a link outside the workspaces, a git or file
  * dependency, a component without a purl or version) is an `info` finding and
  * keeps the check from passing.
  */

@@ -76,6 +76,47 @@ test('readDependencies: workspaces skipped; links, git, file and versionless ent
   ]);
 });
 
+test('readDependencies: links to workspace folders are the project itself; other links stay unresolved', () => {
+  const ws = (workspaces: unknown) =>
+    read({
+      lockfileVersion: 3,
+      packages: {
+        '': { name: 'mono', workspaces },
+        'packages/a': { name: 'a', version: '1.0.0' },
+        'apps/web/ui': { name: 'ui', version: '1.0.0' },
+        'node_modules/a': { resolved: 'packages/a', link: true },
+        'node_modules/ui': { resolved: 'apps/web/ui', link: true },
+        'node_modules/x': { resolved: '../x', link: true },
+        'node_modules/ms': registry('ms', '2.1.3')
+      }
+    });
+  const both = ws(['./packages/*', 'apps/**/']);
+
+  assert.deepEqual(
+    both.resolved.map((d) => d.label),
+    ['ms@2.1.3']
+  );
+  assert.deepEqual(both.unresolved, [{ label: 'x', why: 'link to ../x' }]);
+
+  // One star stays inside one folder: apps/web/ui is not apps/*
+  assert.deepEqual(
+    ws(['packages/*', 'apps/*']).unresolved.map((u) => u.label),
+    ['ui', 'x']
+  );
+
+  // Negated patterns are not read, so nothing is skipped by them (fail closed)
+  for (const patterns of [
+    undefined,
+    { packages: ['packages/*'] },
+    ['!packages/a']
+  ])
+    assert.deepEqual(
+      ws(patterns).unresolved.map((u) => u.label),
+      ['a', 'ui', 'x'],
+      JSON.stringify(patterns)
+    );
+});
+
 test('readDependencies: package-lock v1 has no packages -> throws, naming the fix', () => {
   assert.throws(
     () => read({ lockfileVersion: 1, dependencies: {} }),
