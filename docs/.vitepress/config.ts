@@ -121,6 +121,7 @@ export default defineConfig({
           text: 'Introduction',
           items: [
             { text: 'Getting started', link: '/guide/' },
+            { text: 'Try it', link: '/guide/try-it' },
             { text: 'The evidence report', link: '/guide/report' },
             { text: 'Configuration', link: '/guide/configuration' }
           ]

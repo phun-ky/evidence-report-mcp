@@ -2,9 +2,10 @@
 
 `evidence-report-mcp` is an MCP server with one tool, `verify`. An agent calls
 it before acting on something it did not make: a package it is about to install,
-a dataset it is about to use, a media file it is about to pass on, or a claim it
-is about to repeat. It gets back an [evidence report](./report): what was
-checked, where each result came from and when, and what was not checked.
+a lockfile it is about to install from, a dataset it is about to use, a media
+file it is about to pass on, or a claim it is about to repeat. It gets back an
+[evidence report](./report): what was checked, where each result came from and
+when, and what was not checked.
 
 It needs Node.js 22.12.0 or later.
 
@@ -18,6 +19,9 @@ The tool then shows up as `mcp__evidence-report__verify`. Ask your agent to use
 it before it acts, for example:
 
 > Before you add lodash 4.17.20, verify it, and tell me what was not checked.
+
+To check that it works, and see what to expect for every kind of target,
+[try it](./try-it).
 
 ## Add it to another MCP client
 
