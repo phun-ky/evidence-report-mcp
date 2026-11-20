@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.4.1...0.5.0) (2026-11-20)
+
+### Documentation
+
+* ✏️ bring the security policy and assurance case up to date with the new checks ([5ea3cce](https://github.com/phun-ky/evidence-report-mcp/commit/5ea3cced6020c922bb8d41597ec187d9d6b3e735)), references [#61](https://github.com/phun-ky/evidence-report-mcp/issues/61) [#62](https://github.com/phun-ky/evidence-report-mcp/issues/62) [#63](https://github.com/phun-ky/evidence-report-mcp/issues/63)
+
+### Feature
+
+* 🎸 read a dataset's health from dbt artifacts ([4d59e92](https://github.com/phun-ky/evidence-report-mcp/commit/4d59e92288ce821000c2790c4cf01e84449d4859)), closes [#63](https://github.com/phun-ky/evidence-report-mcp/issues/63)
+
 ## [0.4.1](https://github.com/phun-ky/evidence-report-mcp/compare/0.4.0...0.4.1) (2026-11-20)
 
 ### Bug
