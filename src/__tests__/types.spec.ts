@@ -122,3 +122,14 @@ test('dependencies: exactly one of path or content, content at most 10 MB', () =
   rejected({ kind: 'dependencies', content: 'a'.repeat(10 * 1024 * 1024 + 1) });
   rejected({ kind: 'dependencies', path: 'a'.repeat(4097) });
 });
+
+test('claim sources: a URL, or a URL and a quote of 1 to 1000 characters', () => {
+  const url = 'https://a.example/';
+
+  ok(claim('x', [url, { url, quote: 'q' } as never]));
+  ok(claim('x', [{ url, quote: 'q'.repeat(1000) } as never]));
+  rejected(claim('x', [{ url, quote: '' } as never]));
+  rejected(claim('x', [{ url, quote: 'q'.repeat(1001) } as never]));
+  rejected(claim('x', [{ url } as never]));
+  rejected(claim('x', [{ url: 'not a url', quote: 'q' } as never]));
+});

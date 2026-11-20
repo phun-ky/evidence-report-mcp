@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 
 import { dbtHealth } from './dbt.js';
 import { readDependencies, type Dependency } from './dependencies.js';
+import { fetchPage, normalise, pageText } from './page.js';
 import { osvSeverity, type OsvVuln } from './severity.js';
 import type { CheckResult, Finding, Target } from './types.js';
 
@@ -441,10 +442,14 @@ export function checkC2pa(t: Of<'file'>): Promise<CheckResult> {
 
 /* ---------------- claim: independent corroboration ---------------- */
 
+const domainOf = (url: string) => new URL(url).hostname.replace(/^www\./, '');
+
 /**
- * Heuristic by design. Deliberately does not ask an LLM whether the claim is
- * "plausible": that is the generator grading its own homework.
- * A real version would fetch each source and check it independently.
+ * Heuristic by design: it never asks a language model whether the claim is
+ * "plausible", which would be the generator grading its own homework. It
+ * checks that each quoted source says what the agent quotes, and that the
+ * sources come from at least two domains. Even a pass leaves the verdict
+ * "unknown": a quote on a page shows the page says it, not that it is true.
  */
 export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
   return timed(
@@ -454,9 +459,10 @@ export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
       source: { name: 'provided sources' }
     },
     async () => {
-      const domains = new Set(
-        t.sources.map((s) => new URL(s).hostname.replace(/^www\./, ''))
+      const sources = t.sources.map((s) =>
+        typeof s === 'string' ? { url: s } : s
       );
+      const domains = new Set(sources.map((s) => domainOf(s.url)));
 
       if (domains.size < 2) {
         return {
@@ -471,10 +477,73 @@ export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
         };
       }
 
-      return {
-        status: 'skipped',
-        reason: 'Source fetching and matching not implemented'
-      };
+      const quoted = sources.filter(
+        (s): s is { url: string; quote: string } => 'quote' in s
+      );
+
+      if (!quoted.length)
+        return {
+          status: 'skipped',
+          reason: 'No quotes to check: give sources as { url, quote }'
+        };
+
+      const findings: Finding[] = [];
+      const found = new Set<string>();
+
+      let missing = 0;
+      let unfetched = 0;
+
+      // Pages are fetched together; each settles on its own, so one failure can't hide the others
+      const pages = await Promise.allSettled(
+        quoted.map((s) => fetchPage(s.url))
+      );
+
+      pages.forEach((page, i) => {
+        const { url, quote } = quoted[i]!;
+
+        if (page.status === 'rejected') {
+          unfetched++;
+          findings.push({
+            severity: 'info',
+            message: `Not fetched: ${(page.reason as Error).message}`,
+            ref: url
+          });
+        } else if (normalise(pageText(page.value)).includes(normalise(quote))) {
+          found.add(domainOf(url));
+          findings.push({ severity: 'info', message: 'Quote found', ref: url });
+        } else {
+          missing++;
+          findings.push({
+            severity: 'medium',
+            message:
+              'Quote not found in the page text. The page may also build its text with JavaScript, or be behind a paywall',
+            ref: url
+          });
+        }
+      });
+
+      if (missing)
+        return {
+          status: 'fail',
+          reason: `${missing} quote(s) not found on their pages`,
+          findings
+        };
+
+      if (unfetched)
+        return {
+          status: 'skipped',
+          reason: `${unfetched} source(s) could not be fetched`,
+          findings
+        };
+
+      if (found.size < 2)
+        return {
+          status: 'skipped',
+          reason: 'Quotes found on fewer than two independent domains',
+          findings
+        };
+
+      return { status: 'pass', findings };
     }
   );
 }
@@ -540,7 +609,9 @@ export function plan(t: Target): Plan {
         required: ['claim.corroboration'],
         notChecked: [
           'Interpretation: what the claim means to its audience',
-          'Whether the cited sources are themselves reliable'
+          'Whether the cited sources are themselves reliable',
+          'Whether a quote that was found supports the claim as worded',
+          'Sources given without a quote, and text a page builds with JavaScript'
         ]
       };
   }

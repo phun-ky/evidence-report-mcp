@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, truncate, writeFile } from 'node:fs/promises';
+import https from 'node:https';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, afterEach, before, beforeEach, mock, test } from 'node:test';
@@ -13,11 +14,15 @@ import {
   checkSchema,
   plan
 } from '../checkers.js';
+import { mockHttps } from '../test/https.js';
 import type { Target } from '../types.js';
 
-// No network in tests: any fetch not explicitly mocked fails the test loudly.
+// No network in tests: any fetch or https.get not explicitly mocked fails the test loudly.
 beforeEach(() => {
   mock.method(globalThis, 'fetch', async () => {
+    throw new Error('unexpected network call in test');
+  });
+  mock.method(https, 'get', () => {
     throw new Error('unexpected network call in test');
   });
 });
@@ -635,6 +640,110 @@ test('checkDependencies: reads a path read-only; missing or over 10 MB -> error'
 
   assert.equal(r.status, 'error');
   assert.match(r.reason ?? '', /larger than 10 MB/);
+});
+
+/* ---------------- claim quotes (https.get mocked) ---------------- */
+
+const claim = (
+  sources: (string | { url: string; quote: string })[]
+): Parameters<typeof checkCorroboration>[0] => ({
+  kind: 'claim',
+  text: 'The bridge opened in 1894.',
+  sources
+});
+const pages = {
+  'https://a.example/': {
+    body: '<p>The bridge  <b>opened</b> to traffic in 1894.</p>'
+  },
+  'https://b.example/': {
+    body: '<p>It opened in 1894, after eight years&rsquo; work.</p>'
+  }
+};
+
+test('checkCorroboration: quotes found on two domains -> heuristic pass, findings name each page', async () => {
+  mockHttps(pages);
+
+  const r = await checkCorroboration(
+    claim([
+      { url: 'https://a.example/', quote: 'opened to traffic in 1894' },
+      { url: 'https://b.example/', quote: 'after eight years\u2019 work' }
+    ])
+  );
+
+  assert.equal(r.kind, 'heuristic');
+  assert.equal(r.status, 'pass');
+  assert.deepEqual(r.findings, [
+    { severity: 'info', message: 'Quote found', ref: 'https://a.example/' },
+    { severity: 'info', message: 'Quote found', ref: 'https://b.example/' }
+  ]);
+});
+
+test('checkCorroboration: a quote not on its page -> fail, whatever else was found', async () => {
+  mockHttps(pages);
+
+  const r = await checkCorroboration(
+    claim([
+      { url: 'https://a.example/', quote: 'opened to traffic in 1894' },
+      { url: 'https://b.example/', quote: 'opened in 1895' }
+    ])
+  );
+
+  assert.equal(r.status, 'fail');
+  assert.equal(r.reason, '1 quote(s) not found on their pages');
+  assert.deepEqual(r.findings[1], {
+    severity: 'medium',
+    message:
+      'Quote not found in the page text. The page may also build its text with JavaScript, or be behind a paywall',
+    ref: 'https://b.example/'
+  });
+});
+
+test('checkCorroboration: a page that cannot be fetched -> skipped, never pass', async () => {
+  mockHttps({ ...pages, 'https://b.example/': new Error('ECONNRESET') });
+
+  const r = await checkCorroboration(
+    claim([
+      { url: 'https://a.example/', quote: 'opened to traffic in 1894' },
+      { url: 'https://b.example/', quote: 'opened in 1894' }
+    ])
+  );
+
+  assert.equal(r.status, 'skipped');
+  assert.equal(r.reason, '1 source(s) could not be fetched');
+  assert.deepEqual(r.findings[1], {
+    severity: 'info',
+    message: 'Not fetched: ECONNRESET',
+    ref: 'https://b.example/'
+  });
+});
+
+test('checkCorroboration: quotes found on only one domain -> skipped; unquoted sources are not fetched', async () => {
+  const get = mockHttps(pages);
+  const r = await checkCorroboration(
+    claim([
+      { url: 'https://a.example/', quote: 'opened to traffic in 1894' },
+      'https://b.example/'
+    ])
+  );
+
+  assert.equal(r.status, 'skipped');
+  assert.equal(r.reason, 'Quotes found on fewer than two independent domains');
+  assert.equal(get.mock.callCount(), 1);
+});
+
+test('verify: a claim whose quotes are all found is still unknown, never pass', async () => {
+  mockHttps(pages);
+
+  const { verify } = await import('../server.js');
+  const report = await verify(
+    claim([
+      { url: 'https://a.example/', quote: 'opened to traffic in 1894' },
+      { url: 'https://b.example/', quote: 'opened in 1894' }
+    ])
+  );
+
+  assert.equal(report.checks[0]!.status, 'pass');
+  assert.equal(report.verdict, 'unknown');
 });
 
 /* ---------------- plan ---------------- */
