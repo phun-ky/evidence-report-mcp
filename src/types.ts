@@ -4,6 +4,19 @@ import { z } from 'zod';
 /* Input: what the agent asks us to verify                            */
 /* ------------------------------------------------------------------ */
 
+/* Limits, so one call can't hold the server for long (#61). */
+const MAX_DEPTH = 32;
+const KB = 1024;
+
+/** Whether a JSON value nests objects and arrays at most `max` deep. Stops early, so deep input can't overflow the stack. */
+function withinDepth(v: unknown, max: number): boolean {
+  if (typeof v !== 'object' || v === null) return true;
+
+  return max > 0 && Object.values(v).every((c) => withinDepth(c, max - 1));
+}
+
+const jsonBytes = (v: unknown) => Buffer.byteLength(JSON.stringify(v));
+
 export const PackageTarget = z.object({
   kind: z.literal('package'),
   ecosystem: z.enum([
@@ -15,31 +28,46 @@ export const PackageTarget = z.object({
     'NuGet',
     'RubyGems'
   ]),
-  name: z.string().min(1),
-  version: z.string().min(1)
+  name: z.string().min(1).max(256),
+  version: z.string().min(1).max(256)
 });
 
 export const DatasetTarget = z.object({
   kind: z.literal('dataset'),
   /** Inline JSON Schema the data must satisfy (the "contract"). */
-  schema: z.record(z.string(), z.unknown()),
+  schema: z
+    .record(z.string(), z.unknown())
+    .refine((s) => withinDepth(s, MAX_DEPTH) && jsonBytes(s) <= 100 * KB, {
+      message: `must nest at most ${MAX_DEPTH} deep and be at most 100 KB as JSON`
+    }),
   /** Records to validate. Keep samples small; this is not a warehouse scan. */
-  records: z.array(z.unknown()).min(1).max(1000),
+  records: z
+    .array(z.unknown())
+    .min(1)
+    .max(1000)
+    .refine(
+      (r) =>
+        r.every((rec) => withinDepth(rec, MAX_DEPTH)) &&
+        jsonBytes(r) <= 1024 * KB,
+      {
+        message: `each record must nest at most ${MAX_DEPTH} deep, and all records be at most 1 MB as JSON`
+      }
+    ),
   /** Optional asset id in an observability tool (freshness, volume, lineage). */
-  assetId: z.string().optional()
+  assetId: z.string().max(256).optional()
 });
 
 export const FileTarget = z.object({
   kind: z.literal('file'),
   /** Local path of an image/video/audio file to check for C2PA credentials. */
-  path: z.string().min(1)
+  path: z.string().min(1).max(4096)
 });
 
 export const ClaimTarget = z.object({
   kind: z.literal('claim'),
-  text: z.string().min(1),
+  text: z.string().min(1).max(10_000),
   /** Sources the agent is relying on. Never verified against the agent's own output. */
-  sources: z.array(z.string().url()).default([])
+  sources: z.array(z.string().url().max(2048)).max(20).default([])
 });
 
 /** The zod schema for a target: the `verify` tool's input. */

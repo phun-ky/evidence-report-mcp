@@ -33,9 +33,6 @@ says when it can't answer are decided there.
 
 ### Project health
 
-- **Limits on input size:** a largest dataset, schema depth and number of claim
-  sources, so that one call can't hold the server for long
-  ([#61](https://github.com/phun-ky/evidence-report-mcp/issues/61)).
 - **TypeScript 7**, once TypeDoc and typescript-eslint support it
   ([#30](https://github.com/phun-ky/evidence-report-mcp/issues/30)).
 - **A second maintainer**, so that pull requests get a review from someone other
