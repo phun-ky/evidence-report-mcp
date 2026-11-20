@@ -1,16 +1,18 @@
 # Configuration
 
 The server needs Node.js 22.12.0 or later and no configuration for packages,
-datasets and claims. Media files need `c2patool`.
+lockfiles and claims. Media files need `c2patool`, and a dataset's health needs
+dbt artifacts.
 
 ## Environment variables
 
-| Variable                       | What it does                                                              |
-| ------------------------------ | ------------------------------------------------------------------------- |
-| `EVIDENCE_REPORT_MCP_C2PATOOL` | Path to the `c2patool` binary. Unset, the C2PA check is `skipped`         |
-| `C2PATOOL_TRUST_ANCHORS`       | `c2patool`'s own setting: the certificates (PEM) of the signers you trust |
-| `C2PATOOL_TRUST_CONFIG`        | `c2patool`'s own setting: its trust configuration                         |
-| `C2PATOOL_ALLOWED_LIST`        | `c2patool`'s own setting: signing certificates that are allowed           |
+| Variable                         | What it does                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| `EVIDENCE_REPORT_MCP_C2PATOOL`   | Path to the `c2patool` binary. Unset, the C2PA check is `skipped`             |
+| `C2PATOOL_TRUST_ANCHORS`         | `c2patool`'s own setting: the certificates (PEM) of the signers you trust     |
+| `C2PATOOL_TRUST_CONFIG`          | `c2patool`'s own setting: its trust configuration                             |
+| `C2PATOOL_ALLOWED_LIST`          | `c2patool`'s own setting: signing certificates that are allowed               |
+| `EVIDENCE_REPORT_MCP_DBT_TARGET` | A dbt project's `target` folder. Unset, the dataset health check is `skipped` |
 
 ## `c2patool`
 
@@ -45,13 +47,34 @@ Or, in a JSON configuration:
 Without trust anchors, an intact manifest is reported as `skipped`, never
 `pass`: it proves only that someone signed the file.
 
+## dbt
+
+The dataset health check reads the artifacts dbt writes to its `target` folder:
+`manifest.json`, `run_results.json` (from `dbt build` or `dbt test`) and
+`sources.json` (from `dbt source freshness`). Run those in your pipeline, then
+point the server at the folder:
+
+```sh
+claude mcp add evidence-report \
+  -e EVIDENCE_REPORT_MCP_DBT_TARGET=/path/to/dbt-project/target \
+  -- npx -y evidence-report-mcp
+```
+
+A dataset's `assetId` is then a dbt `unique_id`, such as `model.shop.orders`.
+Artifacts older than 24 hours are stale evidence, so the check is `skipped`. See
+[the dataset check](./checks/dataset#the-check-observability-health) for what
+passes.
+
 ## What it reaches
 
-- **Network:** only `https://api.osv.dev/v1/query`, for package targets, with
-  the ecosystem, name and version. Claim sources are never fetched.
-- **Files:** only the path of a file target, read by `c2patool`. It can read any
-  file the server process can, so run the server with no more rights than it
-  needs.
+- **Network:** only OSV.dev: `https://api.osv.dev/v1/query` for a package's
+  ecosystem, name and version, and `https://api.osv.dev/v1/querybatch` and
+  `https://api.osv.dev/v1/vulns/{id}` for the packages in a lockfile or SBOM.
+  Claim sources are never fetched.
+- **Files:** only the path of a file target, read by `c2patool`; the path of a
+  lockfile or SBOM; and the dbt artifacts in `EVIDENCE_REPORT_MCP_DBT_TARGET`.
+  The server can read any file its process can, so run it with no more rights
+  than it needs.
 - **Processes:** only `c2patool`, started without a shell.
 
 The

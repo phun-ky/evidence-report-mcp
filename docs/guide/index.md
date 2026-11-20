@@ -140,8 +140,7 @@ error, not a report, and never a `pass`.
 
 ## What is not there yet
 
-- The dataset check's observability adapter and the claim check's source
-  matching are stubs: they report `skipped`, so a dataset or a claim is never
-  verified as `pass` yet. Their pages say what they do today.
+- The claim check's source matching is a stub: it reports `skipped`, so a claim
+  is never verified as `pass` yet. Its page says what it does today.
 - An idea for later: a signed report (Sigstore), so that other systems can trust
   the verifier's output and not only the agent's summary of it.

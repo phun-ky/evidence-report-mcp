@@ -10,7 +10,7 @@
 ```
 
 `schema` is a JSON Schema, `records` the data to check against it, and `assetId`
-an optional name for the dataset in an observability tool.
+the dataset's optional dbt `unique_id`, for its health.
 
 ## The check: `schema.conformance`
 
@@ -46,13 +46,40 @@ Case matters (`mN` is not `MN`), and there are no aliases and no conversion.
 
 ## The check: `observability.health`
 
-Meant to ask an observability tool, such as Monte Carlo, Soda or Elementary,
-whether the dataset behind `assetId` is fresh and complete. No tool can be
-configured yet, so it is always `skipped`, and a dataset's verdict is at best
-<span class="verdict unknown">unknown</span>: never `pass`.
+A deterministic check of the dataset behind `assetId`, read from dbt's artifacts
+in the folder that `EVIDENCE_REPORT_MCP_DBT_TARGET` names (see
+[configuration](../configuration#dbt)). `assetId` is a dbt `unique_id`: a model,
+seed, snapshot or source, such as `model.shop.orders`.
+
+It looks at every dbt test on the node (generic tests attached to it and
+singular tests that read it), the node's own build, and the freshness of every
+source upstream of it, through any number of models.
+
+- Every test passed and every upstream source is fresh:
+  <span class="verdict pass">pass</span>.
+- A test failed, the node failed to build, or a source is past its freshness
+  `error_after`: <span class="verdict fail">fail</span>, with a `high` finding
+  whose `ref` is the test's or source's `unique_id`.
+- A test or source that only warned is a `medium` finding, not a fail.
+- A test that errored, was skipped or has no result, a source with no freshness
+  result, or a node with no tests: `skipped`, with an `info` finding for each.
+  Missing evidence is never a pass.
+- Artifacts older than 24 hours, or without a time: `skipped`, as stale
+  evidence. Each artifact's time is an `info` finding, so the report says how
+  old its evidence is.
+- An `assetId` dbt does not know: `skipped`.
+- No `assetId`, or `EVIDENCE_REPORT_MCP_DBT_TARGET` unset: `skipped`, so the
+  verdict is at best <span class="verdict unknown">unknown</span>.
+- A missing or unreadable `manifest.json` or `run_results.json`: `error`.
+
+`run_results.json` is written by every dbt command that runs nodes, so it holds
+only the last one: run `dbt build` (or `dbt test`) last, then
+`dbt source freshness`, which writes `sources.json` and leaves
+`run_results.json` alone.
 
 ## Not checked
 
 - Whether values are true, only whether they are well-formed
 - Meaning of units and labels beyond what the schema encodes
 - Records outside the provided sample
+- Data quality beyond the dbt tests on the node
