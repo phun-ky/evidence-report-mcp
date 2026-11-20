@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.1](https://github.com/phun-ky/evidence-report-mcp/compare/0.4.0...0.4.1) (2026-11-20)
+
+### Bug
+
+* 🐛 treat npm workspace links as the project itself ([ae76eb1](https://github.com/phun-ky/evidence-report-mcp/commit/ae76eb19a3f8bb37f7edcfa7ee1018015156c889)), closes [#73](https://github.com/phun-ky/evidence-report-mcp/issues/73)
+
 ## [0.4.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.3.0...0.4.0) (2026-11-20)
 
 ### Feature
