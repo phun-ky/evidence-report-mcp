@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.3.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.2.0...0.3.0) (2026-11-20)
+
+### Tasks
+
+* 🤖 add VitePress and TypeDoc ([4b3f79a](https://github.com/phun-ky/evidence-report-mcp/commit/4b3f79a575c64b71a0fd182a9ed4f3fdafc5a736))
+* 🤖 generate the API docs with TypeDoc and override vite to 6.4.5 under VitePress ([e80daf3](https://github.com/phun-ky/evidence-report-mcp/commit/e80daf3e3eea473d043bec4446e805fc9d198554))
+* 🤖 let lint pass before the API docs are generated ([6cf1dcb](https://github.com/phun-ky/evidence-report-mcp/commit/6cf1dcb2b2c5460bbf164b48f55b0b9e6ead415b))
+* 🤖 point the npm homepage at the docs site ([56d93a9](https://github.com/phun-ky/evidence-report-mcp/commit/56d93a94a0aa7c778a875fd9e3d9bc4d64e72e43))
+
+### Documentation
+
+* ✏️ add CONTRIBUTING, GOVERNANCE, ROADMAP and a Code of Conduct ([971aa49](https://github.com/phun-ky/evidence-report-mcp/commit/971aa49e127d5b1f2ed4497e18a62c9db02891cd)), closes [#16](https://github.com/phun-ky/evidence-report-mcp/issues/16), references [#16](https://github.com/phun-ky/evidence-report-mcp/issues/16)
+* ✏️ add package, build and project badges to the README ([be53d40](https://github.com/phun-ky/evidence-report-mcp/commit/be53d4053aafc9d696525fa0688dadb0e6a4cd67))
+* ✏️ add the docs site, and keep only getting started in the README ([40957cb](https://github.com/phun-ky/evidence-report-mcp/commit/40957cb02076934e1f073a19a34ed8394dee7bab))
+* ✏️ answer the OpenSSF Best Practices criteria, with an assurance case and badges ([ca3b04b](https://github.com/phun-ky/evidence-report-mcp/commit/ca3b04b6eedf592ce67570c5bd142e7a30ed78d0)), closes [#17](https://github.com/phun-ky/evidence-report-mcp/issues/17), references [#17](https://github.com/phun-ky/evidence-report-mcp/issues/17)
+* ✏️ answer the OSPS Baseline, with a VEX document and the badge ([1b9a20c](https://github.com/phun-ky/evidence-report-mcp/commit/1b9a20ca46a727dee963f522a9817eb4144b4cfe)), closes [#58](https://github.com/phun-ky/evidence-report-mcp/issues/58)
+* ✏️ bring the roadmap up to date and link its issues ([c609861](https://github.com/phun-ky/evidence-report-mcp/commit/c60986117b67c51c97ac92eaa33f52cabb5df154)), closes [#65](https://github.com/phun-ky/evidence-report-mcp/issues/65)
+* ✏️ move the docs site to direction C, the waterline ([00fbe08](https://github.com/phun-ky/evidence-report-mcp/commit/00fbe089f5c8b7146742c77e4b54ea8dc85a457e)), closes [#50](https://github.com/phun-ky/evidence-report-mcp/issues/50)
+* ✏️ record the OpenSSF Best Practices passing badge ([8aa3810](https://github.com/phun-ky/evidence-report-mcp/commit/8aa3810d01d0ffc156a1f89f6a8d12e87b9d410a)), references [#17](https://github.com/phun-ky/evidence-report-mcp/issues/17)
+
+### Feature
+
+* 🎸 limit the size of the verify tool's input ([eacd3e1](https://github.com/phun-ky/evidence-report-mcp/commit/eacd3e19ff1a861ca7a6c14b8af3afd0b4e4a595)), closes [#61](https://github.com/phun-ky/evidence-report-mcp/issues/61)
+
+### Bug
+
+* 🐛 fill the home page board at every window height ([5167adc](https://github.com/phun-ky/evidence-report-mcp/commit/5167adc9634e5712dd3080de2824a9e290e28655)), references [#14](https://github.com/phun-ky/evidence-report-mcp/issues/14)
+* 🐛 keep the wordmark inside the sidebar's column ([f601c1d](https://github.com/phun-ky/evidence-report-mcp/commit/f601c1d3a7b8c57bd0cf091a1e5cc0d6c685384a)), references [#50](https://github.com/phun-ky/evidence-report-mcp/issues/50)
+* 🐛 make the docs site pass WCAG A and AA, and stop the home page scrolling sideways ([8dc1035](https://github.com/phun-ky/evidence-report-mcp/commit/8dc10354933e84de9fc72d22e992426a93fa67d5)), references [#24](https://github.com/phun-ky/evidence-report-mcp/issues/24) [#24](https://github.com/phun-ky/evidence-report-mcp/issues/24)
+* 🐛 start headless Chrome without a guessed port, and wait longer for it ([e802545](https://github.com/phun-ky/evidence-report-mcp/commit/e80254547e11b4a7ea6f1d6f8eb3f5ab03dfade5)), references [#46](https://github.com/phun-ky/evidence-report-mcp/issues/46) [#24](https://github.com/phun-ky/evidence-report-mcp/issues/24)
+
+### Refactoring
+
+* 💡 name the target schema TargetSchema and document the exported API ([a9e37f7](https://github.com/phun-ky/evidence-report-mcp/commit/a9e37f76e304a2c2e8ba0e6a0680ca57b7bb8bec))
+* 💡 share the headless Chrome launch between scripts ([956fd10](https://github.com/phun-ky/evidence-report-mcp/commit/956fd107e870d2b6924d41b0c05491bd9d14eca4)), references [#24](https://github.com/phun-ky/evidence-report-mcp/issues/24)
+
 ## [0.2.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.1.0...0.2.0) (2026-11-19)
 
 ### Tasks
