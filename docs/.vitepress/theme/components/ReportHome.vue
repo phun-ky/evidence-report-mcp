@@ -44,6 +44,12 @@ const kinds = [
     link: '/guide/checks/package'
   },
   {
+    name: 'Lockfiles and SBOMs',
+    text: 'Every package in a lockfile or SBOM, from OSV.dev.',
+    small: 'package-lock.json or CycloneDX. A git dependency keeps it unknown.',
+    link: '/guide/checks/dependencies'
+  },
+  {
     name: 'Datasets',
     text: 'Records against their contract, units included.',
     small: 'JSON Schema in strict mode, with x-unit: lbf*s is not N*s.',
@@ -147,7 +153,7 @@ const links = [
     </section>
 
     <section class="bands" aria-labelledby="er-kinds">
-      <h2 id="er-kinds" class="big">Four kinds of target</h2>
+      <h2 id="er-kinds" class="big">Five kinds of target</h2>
       <div v-for="kind in kinds" :key="kind.name" class="band">
         <h3>
           <a :href="withBase(kind.link)">{{ kind.name }}</a>

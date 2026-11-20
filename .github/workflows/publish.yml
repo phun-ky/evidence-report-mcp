@@ -42,6 +42,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # The release guard and release-it read tags and commits
+          # The head of main, not the PR's merge commit: a run queued behind
+          # another release then starts from that release's commit and tag
+          ref: ${{ github.event.pull_request.base.ref }}
           # GH_TOKEN pushes the release commit and tag; until it is added,
           # runs stop at the release tag check below
           token: ${{ secrets.GH_TOKEN || github.token }}

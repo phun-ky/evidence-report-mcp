@@ -129,6 +129,7 @@ export default defineConfig({
           text: 'Checks',
           items: [
             { text: 'Packages', link: '/guide/checks/package' },
+            { text: 'Lockfiles and SBOMs', link: '/guide/checks/dependencies' },
             { text: 'Datasets', link: '/guide/checks/dataset' },
             { text: 'Media files', link: '/guide/checks/file' },
             { text: 'Claims', link: '/guide/checks/claim' }

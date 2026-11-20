@@ -114,12 +114,13 @@ See the [API reference](../api/) for each export.
 
 ## What it checks
 
-| Target    | Input                           | Check                                                      |
-| --------- | ------------------------------- | ---------------------------------------------------------- |
-| `package` | `{ ecosystem, name, version }`  | [Known advisories from OSV.dev](./checks/package)          |
-| `dataset` | `{ schema, records, assetId? }` | [A JSON Schema contract, units included](./checks/dataset) |
-| `file`    | `{ path }`                      | [C2PA content credentials](./checks/file)                  |
-| `claim`   | `{ text, sources }`             | [Independent sources](./checks/claim)                      |
+| Target         | Input                           | Check                                                        |
+| -------------- | ------------------------------- | ------------------------------------------------------------ |
+| `package`      | `{ ecosystem, name, version }`  | [Known advisories from OSV.dev](./checks/package)            |
+| `dataset`      | `{ schema, records, assetId? }` | [A JSON Schema contract, units included](./checks/dataset)   |
+| `dependencies` | `{ path }` or `{ content }`     | [Every package in a lockfile or SBOM](./checks/dependencies) |
+| `file`         | `{ path }`                      | [C2PA content credentials](./checks/file)                    |
+| `claim`        | `{ text, sources }`             | [Independent sources](./checks/claim)                        |
 
 ### Limits
 
@@ -131,6 +132,7 @@ error, not a report, and never a `pass`.
 | ---------------------------- | -------------------------------------------------------------- |
 | `name`, `version`, `assetId` | 256 characters                                                 |
 | `path`                       | 4096 characters                                                |
+| `content`                    | 10 MB, and a file read from `path` too                         |
 | `text`                       | 10 000 characters                                              |
 | `sources`                    | 20 URLs, each at most 2048 characters                          |
 | `schema`                     | nested at most 32 deep, at most 100 KB as JSON                 |
@@ -141,6 +143,5 @@ error, not a report, and never a `pass`.
 - The dataset check's observability adapter and the claim check's source
   matching are stubs: they report `skipped`, so a dataset or a claim is never
   verified as `pass` yet. Their pages say what they do today.
-- Ideas for later: `verify` over a lockfile or a software bill of materials (the
-  OSV batch API), and a signed report (Sigstore), so that other systems can
-  trust the verifier's output and not only the agent's summary of it.
+- An idea for later: a signed report (Sigstore), so that other systems can trust
+  the verifier's output and not only the agent's summary of it.

@@ -1,9 +1,11 @@
 import { Ajv, type SchemaValidateFunction } from 'ajv';
 
 import { execFile } from 'node:child_process';
+import { readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 
+import { readDependencies, type Dependency } from './dependencies.js';
 import { osvSeverity, type OsvVuln } from './severity.js';
 import type { CheckResult, Finding, Target } from './types.js';
 
@@ -51,13 +53,43 @@ async function timed(
 
 /* ---------------- package: known vulnerabilities (OSV.dev) ---------------- */
 
+const OSV_SOURCE = { name: 'OSV.dev', url: 'https://osv.dev' };
+
+/** One OSV.dev API call: POST with a body, GET without. Errors throw (fail closed). */
+async function osv<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(
+    `https://api.osv.dev/v1${path}`,
+    body === undefined
+      ? { signal: AbortSignal.timeout(10_000) }
+      : {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(10_000)
+        }
+  );
+
+  if (!res.ok) throw new Error(`OSV responded ${res.status}`);
+
+  return (await res.json()) as T;
+}
+
+function vulnFinding(v: OsvVuln, prefix = ''): Finding {
+  const severity = osvSeverity(v);
+
+  return {
+    severity: severity ?? 'high',
+    message:
+      prefix +
+      (v.summary ?? 'Known vulnerability') +
+      (severity ? '' : ' (severity not provided; assumed high)'),
+    ref: v.id
+  };
+}
+
 export function checkOsv(t: Of<'package'>): Promise<CheckResult> {
   return timed(
-    {
-      id: 'osv.vulnerabilities',
-      kind: 'deterministic',
-      source: { name: 'OSV.dev', url: 'https://osv.dev' }
-    },
+    { id: 'osv.vulnerabilities', kind: 'deterministic', source: OSV_SOURCE },
     async () => {
       const vulns: OsvVuln[] = [];
 
@@ -68,23 +100,14 @@ export function checkOsv(t: Of<'package'>): Promise<CheckResult> {
         if (page === 10)
           throw new Error('OSV returned more than 10 pages of results');
 
-        const res = await fetch('https://api.osv.dev/v1/query', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            package: { name: t.name, ecosystem: t.ecosystem },
-            version: t.version,
-            ...(pageToken ? { page_token: pageToken } : {})
-          }),
-          signal: AbortSignal.timeout(10_000)
-        });
-
-        if (!res.ok) throw new Error(`OSV responded ${res.status}`);
-
-        const body = (await res.json()) as {
+        const body = await osv<{
           vulns?: OsvVuln[];
           next_page_token?: string;
-        };
+        }>('/query', {
+          package: { name: t.name, ecosystem: t.ecosystem },
+          version: t.version,
+          ...(pageToken ? { page_token: pageToken } : {})
+        });
 
         vulns.push(...(body.vulns ?? []));
         pageToken = body.next_page_token;
@@ -94,18 +117,108 @@ export function checkOsv(t: Of<'package'>): Promise<CheckResult> {
 
       return {
         status: vulns.length ? 'fail' : 'pass',
-        findings: vulns.map((v) => {
-          const severity = osvSeverity(v);
-
-          return {
-            severity: severity ?? 'high',
-            message:
-              (v.summary ?? 'Known vulnerability') +
-              (severity ? '' : ' (severity not provided; assumed high)'),
-            ref: v.id
-          };
-        })
+        findings: vulns.map((v) => vulnFinding(v))
       };
+    }
+  );
+}
+
+/* ---------------- dependencies: a lockfile or an SBOM (OSV.dev batch) ---------------- */
+
+const MAX_FILE = 10 * 1024 * 1024;
+const BATCH = 1000;
+
+async function readDependencyFile(t: Of<'dependencies'>): Promise<string> {
+  if (t.content !== undefined) return t.content;
+
+  const path = resolve(t.path!);
+
+  if ((await stat(path)).size > MAX_FILE)
+    throw new Error(`${t.path} is larger than 10 MB`);
+
+  return readFile(path, 'utf8');
+}
+
+/** Fetches each advisory's full record (the batch API returns only ids), eight at a time. */
+async function getVulns(ids: string[]): Promise<Map<string, OsvVuln>> {
+  const out = new Map<string, OsvVuln>();
+
+  let next = 0;
+
+  const worker = async () => {
+    while (next < ids.length) {
+      const id = ids[next++]!;
+
+      out.set(id, await osv<OsvVuln>(`/vulns/${encodeURIComponent(id)}`));
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(8, ids.length) }, worker));
+
+  return out;
+}
+
+/**
+ * Every package in a package-lock.json or a CycloneDX file, looked up on
+ * OSV.dev in batches. An entry OSV can't look up (a link, a git or file
+ * dependency, a component without a purl or version) is an `info` finding and
+ * keeps the check from passing.
+ */
+export function checkDependencies(t: Of<'dependencies'>): Promise<CheckResult> {
+  return timed(
+    { id: 'osv.vulnerabilities', kind: 'deterministic', source: OSV_SOURCE },
+    async () => {
+      const { resolved, unresolved } = readDependencies(
+        await readDependencyFile(t)
+      );
+      const hits: { dep: Dependency; id: string }[] = [];
+
+      for (let i = 0; i < resolved.length; i += BATCH) {
+        const batch = resolved.slice(i, i + BATCH);
+        const { results = [] } = await osv<{
+          results?: { vulns?: { id: string }[]; next_page_token?: string }[];
+        }>('/querybatch', { queries: batch.map((d) => d.query) });
+
+        if (results.length !== batch.length)
+          throw new Error(
+            `OSV returned ${results.length} results for ${batch.length} queries`
+          );
+
+        results.forEach((r, j) => {
+          const dep = batch[j]!;
+
+          // Fail closed rather than report a partial list as complete.
+          if (r.next_page_token)
+            throw new Error(
+              `OSV has more results for ${dep.label} than one page`
+            );
+
+          for (const v of r.vulns ?? []) hits.push({ dep, id: v.id });
+        });
+      }
+
+      const vulns = await getVulns([...new Set(hits.map((h) => h.id))]);
+      const findings: Finding[] = [
+        ...hits.map((h) => vulnFinding(vulns.get(h.id)!, `${h.dep.label}: `)),
+        ...unresolved.map((u) => ({
+          severity: 'info' as const,
+          message: `${u.label}: not looked up (${u.why})`
+        }))
+      ];
+      const total = resolved.length + unresolved.length;
+
+      if (hits.length) return { status: 'fail', findings };
+
+      if (unresolved.length)
+        return {
+          status: 'skipped',
+          reason: `${unresolved.length} of ${total} entries could not be looked up on OSV`,
+          findings
+        };
+
+      if (!total) return { status: 'skipped', reason: 'No packages found' };
+
+      return { status: 'pass', findings };
     }
   );
 }
@@ -375,6 +488,17 @@ export function plan(t: Target): Plan {
           'Unpublished or zero-day vulnerabilities',
           'Malicious behaviour without an advisory (typosquats, install scripts)',
           'Whether this package is the right one for the job'
+        ]
+      };
+    case 'dependencies':
+      return {
+        checks: [checkDependencies(t)],
+        required: ['osv.vulnerabilities'],
+        notChecked: [
+          'Unpublished or zero-day vulnerabilities',
+          'Malicious behaviour without an advisory (typosquats, install scripts)',
+          'Whether the file matches what is or will be installed',
+          'Which registry a package-lock entry came from: each is looked up as an npm package'
         ]
       };
     case 'dataset':
