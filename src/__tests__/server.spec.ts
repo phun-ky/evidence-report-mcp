@@ -124,6 +124,15 @@ test('createServer: lists verify as a read-only tool and returns the report as t
       (result.structuredContent as { verdict: string }).verdict,
       'fail'
     );
+
+    // Over a limit: rejected before any check runs, so there is no report
+    const tooLong = await client.callTool({
+      name: 'verify',
+      arguments: { target: { kind: 'claim', text: 'x'.repeat(10_001) } }
+    });
+
+    assert.equal(tooLong.isError, true);
+    assert.equal(tooLong.structuredContent, undefined);
   } finally {
     await client.close();
     await server.close();

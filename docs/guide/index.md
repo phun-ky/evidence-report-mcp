@@ -121,6 +121,21 @@ See the [API reference](../api/) for each export.
 | `file`    | `{ path }`                      | [C2PA content credentials](./checks/file)                  |
 | `claim`   | `{ text, sources }`             | [Independent sources](./checks/claim)                      |
 
+### Limits
+
+So that one call can't hold the server for long, the `verify` tool rejects a
+target over any of these limits before a check runs. The agent gets a validation
+error, not a report, and never a `pass`.
+
+| Field                        | Limit                                                          |
+| ---------------------------- | -------------------------------------------------------------- |
+| `name`, `version`, `assetId` | 256 characters                                                 |
+| `path`                       | 4096 characters                                                |
+| `text`                       | 10 000 characters                                              |
+| `sources`                    | 20 URLs, each at most 2048 characters                          |
+| `schema`                     | nested at most 32 deep, at most 100 KB as JSON                 |
+| `records`                    | 1000 records, each nested at most 32 deep, 1 MB as JSON in all |
+
 ## What is not there yet
 
 - The dataset check's observability adapter and the claim check's source
