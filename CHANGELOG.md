@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.3.0...0.4.0) (2026-11-20)
+
+### Feature
+
+* 🎸 verify a lockfile or an SBOM with the OSV.dev batch API ([27ef08a](https://github.com/phun-ky/evidence-report-mcp/commit/27ef08af09b87f0979380727fbc545c823edc402)), closes [#62](https://github.com/phun-ky/evidence-report-mcp/issues/62)
+
 ## [0.3.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.2.0...0.3.0) (2026-11-20)
 
 ### Tasks
