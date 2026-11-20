@@ -37,7 +37,7 @@ severity. Nothing else in the file is sent.
   `skipped`, so the verdict is `unknown` even when nothing is known to be
   vulnerable. A known vulnerability still makes it
   <span class="verdict fail">fail</span>. These are:
-  - in a package-lock, links (npm workspaces among them), git and file
+  - in a package-lock, links to folders that are not workspaces, git and file
     dependencies, and entries without a version;
   - in a CycloneDX file, components without a purl, or with a purl that has no
     version.
@@ -48,8 +48,10 @@ severity. Nothing else in the file is sent.
   results for one package than fit in one batch answer: `error`. A partial list
   is never reported as complete.
 
-The root project and workspace sources in a package-lock are the project itself,
-not dependencies, and are not looked up.
+The root project, its workspaces and the links to them in a package-lock are the
+project itself, not dependencies, and are not looked up. A link is to a
+workspace when its folder matches one of the root's `workspaces` patterns (`*`
+and `**`; negated patterns are not read, so those links stay unresolved).
 
 ## Not checked
 

@@ -23,6 +23,8 @@ interface LockEntry {
   version?: string;
   resolved?: string;
   link?: boolean;
+  /** On the root entry: the package.json `workspaces` patterns. */
+  workspaces?: unknown;
 }
 
 interface Component {
@@ -34,6 +36,21 @@ interface Component {
 
 const NM = 'node_modules/';
 
+/**
+ * An npm workspace pattern ("packages/*", "apps/**") as a RegExp over folder paths.
+ * shortcut: no negation (!) or braces, so such a workspace stays unresolved; add them if lockfiles need them.
+ */
+function workspacePattern(glob: string): RegExp {
+  const path = glob.replace(/^\.\//, '').replace(/\/$/, '');
+  const escape = (s: string) => s.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  const source = path
+    .split('**')
+    .map((part) => part.split('*').map(escape).join('[^/]*'))
+    .join('.*');
+
+  return new RegExp(`^${source}$`);
+}
+
 /** npm package-lock.json, lockfile versions 2 and 3 (the `packages` map). */
 function fromPackageLock(lock: {
   lockfileVersion?: unknown;
@@ -44,18 +61,24 @@ function fromPackageLock(lock: {
       `package-lock.json (lockfileVersion ${String(lock.lockfileVersion)}) has no "packages"; regenerate it with npm 7 or later`
     );
 
+  const packages = lock.packages as Record<string, LockEntry>;
+  const patterns = packages['']?.workspaces;
+  const workspaces = Array.isArray(patterns)
+    ? patterns.filter((w) => typeof w === 'string').map(workspacePattern)
+    : [];
   const resolved = new Map<string, Dependency>();
   const unresolved: Unresolved[] = [];
 
-  for (const [key, e] of Object.entries(
-    lock.packages as Record<string, LockEntry>
-  )) {
+  for (const [key, e] of Object.entries(packages)) {
     const at = key.lastIndexOf(NM);
 
     // The root project and workspace sources are the project itself, not a dependency.
     if (at === -1) continue;
 
     const name = e.name ?? key.slice(at + NM.length);
+
+    // So is a link to a workspace folder (#73).
+    if (e.link && workspaces.some((w) => w.test(String(e.resolved)))) continue;
 
     if (e.link) unresolved.push({ label: name, why: `link to ${e.resolved}` });
     else if (!e.version) unresolved.push({ label: name, why: 'no version' });
