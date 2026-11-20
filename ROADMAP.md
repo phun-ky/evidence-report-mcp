@@ -15,19 +15,27 @@ never verified as `pass` yet.
 
 - **The dataset observability adapter:** `observability.health` asks a real
   source about the dataset's `assetId`, such as a data catalogue or a pipeline's
-  health, instead of skipping.
+  health, instead of skipping
+  ([#63](https://github.com/phun-ky/evidence-report-mcp/issues/63)).
 - **Claim corroboration:** `claim.corroboration` decides whether the given
   sources independently support the claim, from the sources' own records and
-  without a language model, instead of skipping.
+  without a language model, instead of skipping
+  ([#64](https://github.com/phun-ky/evidence-report-mcp/issues/64)).
 
-Each starts with an issue that names the source it relies on and what the report
-says when that source can't answer.
+Each issue names the sources considered; the source chosen and what the report
+says when it can't answer are decided there.
+
+### New targets
+
+- **Lockfiles and software bills of materials:** `verify` over a whole
+  `package-lock.json` or CycloneDX file, with the OSV.dev batch API
+  ([#62](https://github.com/phun-ky/evidence-report-mcp/issues/62)).
 
 ### Project health
 
-- **OpenSSF Best Practices:** registration, the answers kept in the repository
-  and checked in CI, and badges in the README
-  ([#17](https://github.com/phun-ky/evidence-report-mcp/issues/17)).
+- **Limits on input size:** a largest dataset, schema depth and number of claim
+  sources, so that one call can't hold the server for long
+  ([#61](https://github.com/phun-ky/evidence-report-mcp/issues/61)).
 - **TypeScript 7**, once TypeDoc and typescript-eslint support it
   ([#30](https://github.com/phun-ky/evidence-report-mcp/issues/30)).
 - **A second maintainer**, so that pull requests get a review from someone other
@@ -39,12 +47,8 @@ says when that source can't answer.
 Ideas that fit the project but have no date. Each would be discussed in an issue
 first.
 
-- **Lockfiles and software bills of materials:** `verify` over a whole
-  `package-lock.json` or CycloneDX file, with the OSV.dev batch API.
 - **Signed reports:** a report signed with Sigstore, so that other systems can
   trust the verifier's output and not only an agent's summary of it.
-- **Limits on input size:** a largest dataset, schema depth and number of claim
-  sources, so that one call can't hold the server for long.
 - **More media checks:** ingredient manifests (earlier edits), which the C2PA
   check reports as not checked today.
 
