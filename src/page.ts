@@ -190,8 +190,11 @@ function entity(match: string, name: string): string {
  * decoded. Every step is linear, so a hostile page can't make it slow.
  */
 export function pageText(html: string): string {
+  // Matched against a lower-cased copy; the i flag only says so to readers and scanners
   const lower = html.toLowerCase();
-  const open = /<(script|style|noscript)\b|<!--/g;
+  const open = /<(script|style|noscript)\b|<!--/gi;
+  // Browsers end a comment at "-->" or "--!>"
+  const commentEnd = /--!?>/g;
   const parts: string[] = [];
 
   let at = 0;
@@ -199,14 +202,22 @@ export function pageText(html: string): string {
   for (let m = open.exec(lower); m; m = open.exec(lower)) {
     parts.push(html.slice(at, m.index));
 
-    const close = m[1] ? `</${m[1]}` : '-->';
-    const end = lower.indexOf(close, open.lastIndex);
+    if (m[1]) {
+      const end = lower.indexOf(`</${m[1]}`, open.lastIndex);
 
-    // Unclosed: the rest of the page is inside it
-    if (end === -1) return text(parts.join(' '));
+      // Unclosed: the rest of the page is inside it
+      if (end === -1) return text(parts.join(' '));
 
-    // Past the closing tag's ">" (a comment's "-->" already ends it)
-    at = m[1] ? lower.indexOf('>', end) + 1 || html.length : end + close.length;
+      // Past the closing tag's ">", after any attributes: </script foo="bar">
+      at = lower.indexOf('>', end) + 1 || html.length;
+    } else {
+      commentEnd.lastIndex = open.lastIndex;
+
+      if (!commentEnd.exec(lower)) return text(parts.join(' '));
+
+      at = commentEnd.lastIndex;
+    }
+
     open.lastIndex = at;
   }
 

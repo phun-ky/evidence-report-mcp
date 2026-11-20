@@ -225,6 +225,14 @@ test('pageText: drops scripts, styles, noscript and comments, keeps the text bet
   assert.equal(normalise(pageText(html)), 't bridge opened in 1894');
 });
 
+test('pageText: ends tags and comments where browsers do', () => {
+  assert.equal(
+    normalise(pageText('a<script>b</script foo="bar">c<Script>d</sCrIpT>e')),
+    'a c e'
+  );
+  assert.equal(normalise(pageText('a<!-- b --!>c<!-- d -->e')), 'a c e');
+});
+
 test('pageText: an unclosed script or comment hides the rest of the page', () => {
   assert.equal(normalise(pageText('a<script>b c')), 'a');
   assert.equal(normalise(pageText('a<!-- b c')), 'a');
