@@ -70,18 +70,36 @@ export const ClaimTarget = z.object({
   sources: z.array(z.string().url().max(2048)).max(20).default([])
 });
 
+export const DependenciesTarget = z
+  .object({
+    kind: z.literal('dependencies'),
+    /** Local path of a package-lock.json or a CycloneDX JSON file, read-only. */
+    path: z.string().min(1).max(4096).optional(),
+    /** The file's content, instead of a path. */
+    content: z
+      .string()
+      .min(1)
+      .max(10 * KB * KB)
+      .optional()
+  })
+  .refine((t) => (t.path === undefined) !== (t.content === undefined), {
+    message: 'Give exactly one of path or content'
+  });
+
 /** The zod schema for a target: the `verify` tool's input. */
 export const TargetSchema = z.discriminatedUnion('kind', [
   PackageTarget,
   DatasetTarget,
   FileTarget,
-  ClaimTarget
+  ClaimTarget,
+  DependenciesTarget
 ]);
 
 /**
  * What to verify, by `kind`: a `package` (ecosystem, name and version), a
  * `dataset` (a JSON Schema and records), a `file` (a path) or a `claim` (text
- * and the sources it relies on).
+ * and the sources it relies on) or `dependencies` (a package-lock.json or a
+ * CycloneDX file, by `path` or `content`).
  */
 export type Target = z.infer<typeof TargetSchema>;
 

@@ -109,7 +109,7 @@ export function createServer(): McpServer {
     {
       title: 'Verify before acting',
       description: [
-        'Run independent checks on a package, dataset, media file, or claim and return an evidence report.',
+        'Run independent checks on a package, a lockfile or SBOM, a dataset, a media file or a claim and return an evidence report.',
         'Call this BEFORE acting on data you did not produce.',
         "Treat verdict 'unknown' as 'not verified'. Read 'notChecked' before telling a user something is safe or true."
       ].join(' '),

@@ -25,12 +25,6 @@ never verified as `pass` yet.
 Each issue names the sources considered; the source chosen and what the report
 says when it can't answer are decided there.
 
-### New targets
-
-- **Lockfiles and software bills of materials:** `verify` over a whole
-  `package-lock.json` or CycloneDX file, with the OSV.dev batch API
-  ([#62](https://github.com/phun-ky/evidence-report-mcp/issues/62)).
-
 ### Project health
 
 - **TypeScript 7**, once TypeDoc and typescript-eslint support it
