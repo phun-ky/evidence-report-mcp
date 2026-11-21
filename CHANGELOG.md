@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.1](https://github.com/phun-ky/evidence-report-mcp/compare/0.6.0...0.6.1) (2026-11-21)
+
+### Tasks
+
+* 🤖 clear dependency advisories flagged by Scorecard ([4e0d227](https://github.com/phun-ky/evidence-report-mcp/commit/4e0d2278fa95c8d50a2d0b24e68239cdb817aa43))
+* 🤖 only ignore advisories present in the lockfile ([7568368](https://github.com/phun-ky/evidence-report-mcp/commit/7568368f21e773bcb10e4c14b652f9a311c0cc2d))
+
+### Documentation
+
+* ✏️ add a Try it page to the guide ([c7daa96](https://github.com/phun-ky/evidence-report-mcp/commit/c7daa9627714af8c8d6bf16a07cb58d600c4b4e8)), closes [#77](https://github.com/phun-ky/evidence-report-mcp/issues/77)
+* ✏️ add Glama badge and glama.json ([cfdc54e](https://github.com/phun-ky/evidence-report-mcp/commit/cfdc54ea000f9eaa33e9d80f595617546c28d126))
+
+### Bug
+
+* 🐛 ignore Object.prototype names in severity lookups ([cb6302f](https://github.com/phun-ky/evidence-report-mcp/commit/cb6302f0d6cfd4380f5fb85418c71cf13bb90f77))
+
 ## [0.6.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.5.0...0.6.0) (2026-11-20)
 
 ### Feature
