@@ -212,16 +212,17 @@ const INLINE = new RegExp(
   `^</?(${'a abbr b bdi bdo cite code data del dfn em font i ins kbd mark q s samp small span strong sub time tt u var wbr'.split(' ').join('|')})(?=[\\s/>])`,
   'i'
 );
-// Private-use marks around a <sup>, so that a footnote marker in one can be dropped once the tags are gone
+// Private-use marks: around a <sup>, so that a footnote marker in one can be dropped once the tags are gone, and for an inline tag
 const SUP_OPEN = '\ue000';
 const SUP_CLOSE = '\ue001';
+const INLINE_MARK = '\ue002';
 
 function tag(t: string): string {
   if (/^<sup(?=[\s/>])/i.test(t)) return SUP_OPEN;
 
   if (/^<\/sup(?=[\s/>])/i.test(t)) return SUP_CLOSE;
 
-  return INLINE.test(t) ? '' : ' ';
+  return INLINE.test(t) ? INLINE_MARK : ' ';
 }
 
 function entity(match: string, name: string): string {
@@ -277,8 +278,9 @@ export function pageText(html: string): string {
 
 const text = (html: string) =>
   html
-    // A lone < is a space too: removing inline tags must never join "<scr<b>ipt>" into a tag
+    // A lone < is a space too, so that removing inline tags can never join "<scr<b>ipt>" into a tag
     .replace(/<[^<>]*>|</g, tag)
+    .replace(/\ue002/g, '')
     // A <sup> whose whole text is in square brackets is a footnote marker, such as [1] (decided on #88)
     .replace(/\ue000\s*\[[^[\]\ue000\ue001]{1,30}\]\s*\ue001/g, '')
     .replace(/[\ue000\ue001]/g, '')
