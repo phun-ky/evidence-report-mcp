@@ -548,6 +548,194 @@ export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
   );
 }
 
+/* ---------------- claim: retracted sources (Crossref) ---------------- */
+
+const DOI_HOSTS = new Set(['doi.org', 'dx.doi.org', 'www.doi.org']);
+
+/** The DOI in a doi.org link, lower-cased (DOIs ignore case), or undefined for any other URL (decided on #83). */
+export function doiOf(url: string): string | undefined {
+  const u = new URL(url);
+
+  if (!DOI_HOSTS.has(u.hostname)) return undefined;
+
+  let doi: string;
+
+  try {
+    doi = decodeURIComponent(u.pathname.slice(1));
+  } catch {
+    return undefined;
+  }
+
+  return /^10\.\d{4,9}\/\S+$/.test(doi) ? doi.toLowerCase() : undefined;
+}
+
+interface CrossrefUpdate {
+  DOI?: string;
+  type?: unknown;
+  label?: string;
+  source?: string;
+  updated?: { 'date-time'?: string };
+}
+
+/** Crossref update types that make a paper unsafe to rely on; any other update is information (decided on #83). */
+const UPDATE_SEVERITY = new Map<string, Finding['severity']>([
+  ['retraction', 'high'],
+  ['partial_retraction', 'high'],
+  ['withdrawal', 'high'],
+  ['removal', 'high'],
+  ['expression_of_concern', 'medium']
+]);
+const NOT_RETRACTED =
+  'No retraction, withdrawal or expression of concern recorded';
+// A generic client name, without contact details: no Crossref "polite pool"
+const LOOKUP = { headers: { 'user-agent': 'evidence-report-mcp' } };
+
+/** A paper's updates in Crossref, or undefined when Crossref has no record of it. Errors throw (fail closed). */
+async function crossrefUpdates(
+  doi: string,
+  signal: AbortSignal
+): Promise<CrossrefUpdate[] | undefined> {
+  const res = await fetch(
+    `https://api.crossref.org/works/${encodeURIComponent(doi)}`,
+    { ...LOOKUP, signal }
+  );
+
+  if (res.status === 404) {
+    await res.body?.cancel();
+
+    return undefined;
+  }
+
+  if (!res.ok) throw new Error(`Crossref responded ${res.status}`);
+
+  const body = (await res.json()) as {
+    message?: { 'updated-by'?: unknown };
+  };
+  const updates = body.message?.['updated-by'];
+
+  return Array.isArray(updates) ? (updates as CrossrefUpdate[]) : [];
+}
+
+/** The agency that registered a DOI, or undefined when doi.org says it doesn't exist. Errors throw. */
+async function registrationAgency(
+  doi: string,
+  signal: AbortSignal
+): Promise<string | undefined> {
+  const res = await fetch(`https://doi.org/ra/${encodeURIComponent(doi)}`, {
+    ...LOOKUP,
+    signal
+  });
+
+  if (!res.ok) throw new Error(`doi.org responded ${res.status}`);
+
+  const [entry] = (await res.json()) as { RA?: unknown }[];
+
+  return typeof entry?.RA === 'string' ? entry.RA : undefined;
+}
+
+function updateFinding(doi: string, u: CrossrefUpdate): Finding {
+  // Type names vary in the data: "Retraction", "expression-of-concern"
+  const type = String(u.type).toLowerCase().replace(/-/g, '_');
+  const date = u.updated?.['date-time']?.slice(0, 10);
+  const from = u.source === 'retraction-watch' ? ', from Retraction Watch' : '';
+
+  return {
+    severity: UPDATE_SEVERITY.get(type) ?? 'info',
+    message: `${u.label ?? type}${date ? ` on ${date}` : ''}${u.DOI ? `, notice ${u.DOI}` : ''}${from}`,
+    ref: doi
+  };
+}
+
+/**
+ * Deterministic: looks up each doi.org source in Crossref, which includes the
+ * Retraction Watch data. A retracted, withdrawn or removed paper, one under an
+ * expression of concern, or a DOI that doesn't exist fails the claim. It is not
+ * required, so it can fail a claim but never make it pass.
+ */
+export function checkRetractions(t: Of<'claim'>): Promise<CheckResult> {
+  return timed(
+    {
+      id: 'claim.retractions',
+      kind: 'deterministic',
+      source: { name: 'Crossref', url: 'https://www.crossref.org' }
+    },
+    async () => {
+      const dois = [
+        ...new Set(
+          t.sources
+            .map((s) => doiOf(typeof s === 'string' ? s : s.url))
+            .filter((d) => d !== undefined)
+        )
+      ];
+
+      if (!dois.length)
+        return {
+          status: 'skipped',
+          reason: 'No DOI sources: give papers as https://doi.org/ links'
+        };
+
+      // One time budget for every lookup. Crossref's public pool takes one request at a time, so they run in turn.
+      const signal = AbortSignal.timeout(30_000);
+      const findings: Finding[] = [];
+
+      let elsewhere = 0;
+
+      for (const doi of dois) {
+        const updates = await crossrefUpdates(doi, signal);
+
+        if (updates) {
+          const own = updates
+            .filter((u) => typeof u?.type === 'string')
+            .map((u) => updateFinding(doi, u));
+
+          if (!own.some((f) => f.severity !== 'info'))
+            own.push({ severity: 'info', message: NOT_RETRACTED, ref: doi });
+
+          findings.push(...own);
+          continue;
+        }
+
+        const agency = await registrationAgency(doi, signal);
+
+        if (agency) {
+          elsewhere++;
+          findings.push({
+            severity: 'info',
+            message: `Not in Crossref (registered with ${agency}): not checked for retractions`,
+            ref: doi
+          });
+        } else {
+          findings.push({
+            severity: 'medium',
+            message: 'No such DOI: doi.org does not know it',
+            ref: doi
+          });
+        }
+      }
+
+      const failed = new Set(
+        findings.filter((f) => f.severity !== 'info').map((f) => f.ref)
+      ).size;
+
+      if (failed)
+        return {
+          status: 'fail',
+          reason: `${failed} cited paper(s) retracted, under concern or not found`,
+          findings
+        };
+
+      if (elsewhere)
+        return {
+          status: 'skipped',
+          reason: `${elsewhere} DOI(s) not in Crossref`,
+          findings
+        };
+
+      return { status: 'pass', findings };
+    }
+  );
+}
+
 /* ---------------- routing ---------------- */
 
 export interface Plan {
@@ -605,11 +793,12 @@ export function plan(t: Target): Plan {
       };
     case 'claim':
       return {
-        checks: [checkCorroboration(t)],
+        checks: [checkCorroboration(t), checkRetractions(t)],
         required: ['claim.corroboration'],
         notChecked: [
           'Interpretation: what the claim means to its audience',
-          'Whether the cited sources are themselves reliable',
+          'Whether the cited sources are themselves reliable, beyond retractions recorded in Crossref',
+          'Retractions of papers not given as a doi.org link, or registered outside Crossref',
           'Whether a quote that was found supports the claim as worded',
           'Sources given without a quote, and text a page builds with JavaScript'
         ]

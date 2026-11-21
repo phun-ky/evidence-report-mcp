@@ -62,19 +62,23 @@ What you can rely on:
   file at a `dependencies` target's `path`, and the dbt artifacts in
   `EVIDENCE_REPORT_MCP_DBT_TARGET`. The only process it starts is `c2patool`,
   with the `trust` subcommand, which reads the file and writes nothing.
-- **Two kinds of network destination.** For a `package` target the server sends
-  the package name, ecosystem and version to `https://api.osv.dev/v1/query`,
-  with at most 10 pages of results. For a `dependencies` target it sends each
-  package's name and version, or its purl, to
-  `https://api.osv.dev/v1/querybatch`, and the id of each advisory found to
+- **Three kinds of network destination.** For a `package` target the server
+  sends the package name, ecosystem and version to
+  `https://api.osv.dev/v1/query`, with at most 10 pages of results. For a
+  `dependencies` target it sends each package's name and version, or its purl,
+  to `https://api.osv.dev/v1/querybatch`, and the id of each advisory found to
   `https://api.osv.dev/v1/vulns/{id}`. Every request has a 10 second timeout.
   For a `claim` target, each source given with a `quote` is fetched with a GET:
   `https` only, only hosts whose every address is public (checked when the
   connection is made, so the server can't be made to reach its own machine or
   network), redirects only to the same kind of address and at most 5, at most 2
   MB and 10 seconds a page, no cookies, and the user agent
-  `evidence-report-mcp`. Sources without a quote are never fetched. Nothing else
-  is sent anywhere, and JSON Schema `$ref`s are never loaded from the network.
+  `evidence-report-mcp`. Sources without a quote are never fetched. For a
+  `claim` target, the DOI of each source given as a `doi.org` link is sent to
+  `https://api.crossref.org/works/{doi}`, and to `https://doi.org/ra/{doi}` only
+  when Crossref doesn't know it: one request at a time, 30 seconds in all, with
+  the same user agent and no contact details. Nothing else is sent anywhere, and
+  JSON Schema `$ref`s are never loaded from the network.
 - **No listening port.** The server talks to its client over stdio only.
 - **No data collection.** There is no telemetry.
 - **Fail closed.** A check that throws is reported as `error`, and a required
