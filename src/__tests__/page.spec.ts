@@ -132,6 +132,45 @@ test('fetchPage: follows https redirects, relative ones too', async () => {
   assert.equal(await fetchPage('https://a.example/'), 'done');
 });
 
+test('fetchPage: decodes with the header charset, then a <meta> in the first 1,024 bytes, then UTF-8', async () => {
+  // “café” in Windows-1252: curly quotes and é are one byte each
+  const cp1252 = Buffer.from([0x93, 0x63, 0x61, 0x66, 0xe9, 0x94]);
+  const html = (head: string) => Buffer.concat([Buffer.from(head), cp1252]);
+
+  mockHttps({
+    'https://a.example/header': {
+      headers: { 'content-type': 'text/html; charset="Windows-1252"' },
+      chunks: [cp1252]
+    },
+    'https://a.example/meta': {
+      chunks: [html('<meta charset="windows-1252">')]
+    },
+    'https://a.example/http-equiv': {
+      chunks: [
+        html(
+          '<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">'
+        )
+      ]
+    },
+    'https://a.example/late-meta': {
+      chunks: [html(`${' '.repeat(1024)}<meta charset="windows-1252">`)]
+    },
+    'https://a.example/unknown': {
+      headers: { 'content-type': 'text/html; charset=x-made-up' },
+      chunks: [Buffer.from('“café”')]
+    },
+    'https://a.example/none': { chunks: [Buffer.from('“café”')] }
+  });
+
+  assert.equal(await fetchPage('https://a.example/header'), '“café”');
+  assert.match(await fetchPage('https://a.example/meta'), /“café”$/);
+  // iso-8859-1 is Windows-1252 to a browser, and to TextDecoder
+  assert.match(await fetchPage('https://a.example/http-equiv'), /“café”$/);
+  assert.match(await fetchPage('https://a.example/late-meta'), /�/);
+  assert.equal(await fetchPage('https://a.example/unknown'), '“café”');
+  assert.equal(await fetchPage('https://a.example/none'), '“café”');
+});
+
 test('fetchPage: refuses http, private address literals, redirects to either, and more than 5 redirects', async () => {
   await assert.rejects(
     fetchPage('http://a.example/'),
@@ -249,12 +288,60 @@ test('pageText: decodes common entities, numeric and hex; leaves others alone', 
   );
 });
 
+test('pageText: inline tags become nothing, other tags a space', () => {
+  assert.equal(
+    normalise(pageText('<b>Bri</b>dge, <a href="/d">Derby</a>’s <em>own</em>')),
+    "bridge, derby's own"
+  );
+  assert.equal(
+    normalise(pageText('<p>one</p><p>two</p>three<br>four<div>five</div>')),
+    'one two three four five'
+  );
+  // A tag that only starts like an inline one is not one
+  assert.equal(normalise(pageText('a<article>b<span>c</span>')), 'a bc');
+});
+
+test('pageText: drops footnote markers in <sup>, keeps other superscripts', () => {
+  assert.equal(
+    normalise(
+      pageText(
+        'bridge<sup class="reference"><a href="#n1"><span>[</span>1<span>]</span></a></sup> in London'
+      )
+    ),
+    'bridge in london'
+  );
+  assert.equal(
+    normalise(pageText('true<sup> [<i>citation needed</i>] </sup>.')),
+    'true.'
+  );
+  assert.equal(
+    normalise(pageText('10<sup>6</sup> people, 2<SUP>[x]y</SUP>')),
+    '106 people, 2[x]y'
+  );
+  // Unclosed or stray: the marks never reach the text
+  assert.equal(pageText('a<sup>[1] b</sup>c</sup>'), 'a[1] bc');
+});
+
+test('pageText: decodes typographic entities', () => {
+  assert.equal(
+    normalise(
+      pageText(
+        '1886&ndash;1894 &mdash; &minus;1, vis&shy;itors &laquo;&sbquo;a&lsquo; &bdquo;b&ldquo;&raquo; x&times;y&thinsp;&middot;'
+      )
+    ),
+    '1886-1894 - -1, visitors «\'a\' "b"» x×y ·'
+  );
+});
+
 test('pageText: hostile input stays linear', () => {
   const t0 = Date.now();
 
   pageText('<'.repeat(2 * 1024 * 1024));
   pageText('<script'.repeat(300_000));
   pageText('&a'.repeat(1024 * 1024));
+  pageText(`<${'a'.repeat(2 * 1024 * 1024)}`);
+  pageText('<sup>['.repeat(300_000));
+  pageText('\ue000['.repeat(1024 * 1024));
   assert.ok(Date.now() - t0 < 2000, `${Date.now() - t0} ms`);
 });
 
@@ -263,4 +350,10 @@ test('normalise: quotes, hyphens, spaces, case and compatibility forms', () => {
     normalise('  The “ﬁrst”   bridge’s  span – 1894\n'),
     'the "first" bridge\'s span - 1894'
   );
+  // Invisible: soft hyphens and zero-width characters, on both sides
+  assert.equal(
+    normalise('con\u00adstruc\u200btion\u200c \u200dbe\u2060gan\ufeff'),
+    'construction began'
+  );
+  assert.equal(normalise('„Brücke‚'), '"brücke\'');
 });

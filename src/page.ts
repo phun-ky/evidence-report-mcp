@@ -156,8 +156,24 @@ export async function fetchPage(url: string): Promise<string> {
       chunks.push(chunk);
     }
 
-    // shortcut: decodes as UTF-8 whatever the charset; read the header's charset if pages need it.
-    return Buffer.concat(chunks).toString('utf8');
+    return decode(Buffer.concat(chunks), type);
+  }
+}
+
+/** Decodes a page with its charset: the content-type header's, then a <meta> in the first 1,024 bytes, then UTF-8 (decided on #88). */
+function decode(body: Buffer, type: string): string {
+  const label =
+    /charset=["']?([\w-]+)/i.exec(type)?.[1] ??
+    /<meta[^>]+charset=["']?([\w-]+)/i.exec(
+      body.subarray(0, 1024).toString('latin1')
+    )?.[1] ??
+    'utf-8';
+
+  try {
+    return new TextDecoder(label).decode(body);
+  } catch {
+    // An unknown charset: UTF-8, which can only make a quote not found
+    return new TextDecoder().decode(body);
   }
 }
 
@@ -172,8 +188,41 @@ const ENTITIES: Record<string, string> = {
   rsquo: "'",
   ldquo: '"',
   rdquo: '"',
-  hellip: '...'
+  hellip: '...',
+  // Typographic ones (decided on #88); normalise makes them match their plain forms
+  ndash: '–',
+  mdash: '—',
+  minus: '−',
+  shy: '\u00ad',
+  zwnj: '\u200c',
+  zwj: '\u200d',
+  thinsp: '\u2009',
+  ensp: '\u2002',
+  emsp: '\u2003',
+  sbquo: '‚',
+  bdquo: '„',
+  laquo: '«',
+  raquo: '»',
+  middot: '·',
+  bull: '•',
+  times: '×'
 };
+/** Tags that a browser renders inline, in a line of text: they become nothing, any other tag a space. */
+const INLINE = new RegExp(
+  `^</?(${'a abbr b bdi bdo cite code data del dfn em font i ins kbd mark q s samp small span strong sub time tt u var wbr'.split(' ').join('|')})(?=[\\s/>])`,
+  'i'
+);
+// Private-use marks around a <sup>, so that a footnote marker in one can be dropped once the tags are gone
+const SUP_OPEN = '\ue000';
+const SUP_CLOSE = '\ue001';
+
+function tag(t: string): string {
+  if (/^<sup(?=[\s/>])/i.test(t)) return SUP_OPEN;
+
+  if (/^<\/sup(?=[\s/>])/i.test(t)) return SUP_CLOSE;
+
+  return INLINE.test(t) ? '' : ' ';
+}
 
 function entity(match: string, name: string): string {
   if (name[0] !== '#') return ENTITIES[name.toLowerCase()] ?? match;
@@ -228,15 +277,19 @@ export function pageText(html: string): string {
 
 const text = (html: string) =>
   html
-    .replace(/<[^<>]*>/g, ' ')
+    .replace(/<[^<>]*>/g, tag)
+    // A <sup> whose whole text is in square brackets is a footnote marker, such as [1] (decided on #88)
+    .replace(/\ue000\s*\[[^[\]\ue000\ue001]{1,30}\]\s*\ue001/g, '')
+    .replace(/[\ue000\ue001]/g, '')
     .replace(/&(#x[0-9a-f]{1,6}|#[0-9]{1,7}|[a-z]{2,8});/gi, entity);
 
-/** For matching: Unicode compatibility form, straight quotes and hyphens, one space, lower case. */
+/** For matching: Unicode compatibility form, no soft hyphens or zero-width characters, straight quotes and hyphens, one space, lower case. */
 export const normalise = (s: string) =>
   s
     .normalize('NFKC')
-    .replace(/[‘’‛′]/g, "'")
-    .replace(/[“”‟″]/g, '"')
+    .replace(/[\u00ad\u200b-\u200d\u2060\ufeff]/g, '')
+    .replace(/[‘’‚‛′]/g, "'")
+    .replace(/[“”„‟″]/g, '"')
     .replace(/[‐-―−]/g, '-')
     .replace(/\s+/g, ' ')
     .trim()

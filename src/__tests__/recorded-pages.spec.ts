@@ -42,8 +42,7 @@ const cases: Record<string, Case> = {
   'Wikipedia: a footnote marker inside the quoted sentence': {
     file: 'wikipedia-tower-bridge.html',
     quote: 'cantilever bridge in London, built between 1886 and 1894',
-    expect: 'found',
-    todo: '#88: drop footnote markers, or decide that quotes keep them'
+    expect: 'found'
   },
   'GOV.UK: curly quotes in the page, straight in the quote': {
     file: 'govuk-gladstone.html',
@@ -69,8 +68,7 @@ const cases: Record<string, Case> = {
   'GOV.UK: a closing tag right before an apostrophe': {
     file: 'govuk-gladstone.html',
     quote: "the Earl of Derby's Conservative government",
-    expect: 'found',
-    todo: '#88: inline tags become a space'
+    expect: 'found'
   },
   'Hand-made: text built with JavaScript': {
     file: 'hand-made-js-shell.html',
@@ -90,39 +88,33 @@ const cases: Record<string, Case> = {
   'Hand-made: &ndash;': {
     file: 'hand-made-typography.html',
     quote: 'built between 1886–1894',
-    expect: 'found',
-    todo: '#88: named entities'
+    expect: 'found'
   },
   'Hand-made: &mdash;': {
     file: 'hand-made-typography.html',
     quote: 'bascules—each weighing over 1,000 tonnes—still open',
-    expect: 'found',
-    todo: '#88: named entities'
+    expect: 'found'
   },
   'Hand-made: &shy;': {
     file: 'hand-made-typography.html',
     quote: 'open to visitors every day',
-    expect: 'found',
-    todo: '#88: soft hyphens'
+    expect: 'found'
   },
   'Hand-made: a literal soft hyphen': {
     file: 'hand-made-typography.html',
     quote: 'closed to the public in 1910',
-    expect: 'found',
-    todo: '#88: soft hyphens'
+    expect: 'found'
   },
   'Hand-made: a zero-width space': {
     file: 'hand-made-typography.html',
     quote: 'high-level walkways reopened in 1982',
-    expect: 'found',
-    todo: '#88: zero-width characters'
+    expect: 'found'
   },
   'Hand-made: a Windows-1252 page': {
     file: 'hand-made-windows-1252.html',
     contentType: 'text/html; charset=windows-1252',
     quote: '"the gateway to London" and the city\'s cafés agreed',
-    expect: 'found',
-    todo: '#88: read the charset'
+    expect: 'found'
   }
 };
 
