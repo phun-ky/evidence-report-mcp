@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.7.0...0.8.0) (2026-11-21)
+
+### Feature
+
+* 🎸 read research paper sources from Europe PMC and OpenAlex ([4f240ec](https://github.com/phun-ky/evidence-report-mcp/commit/4f240ecf30c47dbf6d74189239c95853303e9901)), closes [#84](https://github.com/phun-ky/evidence-report-mcp/issues/84)
+
 ## [0.7.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.6.2...0.7.0) (2026-11-21)
 
 ### Feature
