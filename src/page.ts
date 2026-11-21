@@ -277,12 +277,11 @@ export function pageText(html: string): string {
 
 const text = (html: string) =>
   html
-    .replace(/<[^<>]*>/g, tag)
+    // A lone < is a space too: removing inline tags must never join "<scr<b>ipt>" into a tag
+    .replace(/<[^<>]*>|</g, tag)
     // A <sup> whose whole text is in square brackets is a footnote marker, such as [1] (decided on #88)
     .replace(/\ue000\s*\[[^[\]\ue000\ue001]{1,30}\]\s*\ue001/g, '')
     .replace(/[\ue000\ue001]/g, '')
-    // Removing inline tags can join "<scr<b>ipt>" into a tag; never used as HTML, but none survive (decided on #88)
-    .replace(/</g, ' ')
     .replace(/&(#x[0-9a-f]{1,6}|#[0-9]{1,7}|[a-z]{2,8});/gi, entity);
 
 /** For matching: Unicode compatibility form, no soft hyphens or zero-width characters, straight quotes and hyphens, one space, lower case. */
