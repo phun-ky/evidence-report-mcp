@@ -6,3 +6,5 @@ CHANGELOG.md
 docs/api
 docs/.vitepress/cache
 docs/.vitepress/dist
+# Recorded pages, kept byte for byte (#85)
+src/test/pages/*.html
