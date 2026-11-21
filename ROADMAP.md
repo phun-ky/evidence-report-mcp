@@ -46,6 +46,7 @@ first.
   times and `notChecked` list.
 - **Acting on targets.** The server only reads: it never installs packages,
   changes data or files, or publishes anything.
-- **Collecting data.** The server keeps nothing and reports nothing back. The
-  only outside call is the package lookup on OSV.dev, as the
+- **Collecting data.** The server keeps nothing and reports nothing back. Its
+  only outside calls are the package lookups on OSV.dev and the pages of claim
+  sources given with a quote, as the
   [security policy](SECURITY.md#security-expectations) describes.
