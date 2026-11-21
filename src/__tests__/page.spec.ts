@@ -299,6 +299,9 @@ test('pageText: inline tags become nothing, other tags a space', () => {
   );
   // A tag that only starts like an inline one is not one
   assert.equal(normalise(pageText('a<article>b<span>c</span>')), 'a bc');
+  // Joined pieces never make a tag; an escaped < still reads as one
+  assert.equal(pageText('<scr<b>ipt>x'), ' script>x');
+  assert.equal(pageText('a &lt; b'), 'a < b');
 });
 
 test('pageText: drops footnote markers in <sup>, keeps other superscripts', () => {
