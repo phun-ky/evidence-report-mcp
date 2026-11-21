@@ -207,9 +207,9 @@ const ENTITIES: Record<string, string> = {
   bull: '•',
   times: '×'
 };
-/** Tags that a browser renders inline, in a line of text: they become nothing, any other tag a space. */
+/** Tags that a browser renders inline, in a line of text: they become nothing, any other tag a space. HTML, then JATS, the XML of papers' full texts (#84). */
 const INLINE = new RegExp(
-  `^</?(${'a abbr b bdi bdo cite code data del dfn em font i ins kbd mark q s samp small span strong sub time tt u var wbr'.split(' ').join('|')})(?=[\\s/>])`,
+  `^</?(${'a abbr b bdi bdo cite code data del dfn em font i ins kbd mark q s samp small span strong sub time tt u var wbr bold ext-link italic monospace named-content sc styled-content underline xref'.split(' ').join('|')})(?=[\\s/>])`,
   'i'
 );
 // Private-use marks: around a <sup>, so that a footnote marker in one can be dropped once the tags are gone, and for an inline tag

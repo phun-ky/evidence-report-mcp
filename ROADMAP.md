@@ -27,9 +27,6 @@ first.
   property and value against Wikidata, the only way a claim could ever `pass`.
 - **More media checks:** ingredient manifests (earlier edits), which the C2PA
   check reports as not checked today.
-- **Research papers as sources:** look for a quote in the paper's abstract or
-  open-access text on Europe PMC and OpenAlex, not on a publisher page behind a
-  paywall ([#84](https://github.com/phun-ky/evidence-report-mcp/issues/84)).
 
 ## Not planned
 
@@ -42,5 +39,6 @@ first.
   changes data or files, or publishes anything.
 - **Collecting data.** The server keeps nothing and reports nothing back. Its
   only outside calls are the package lookups on OSV.dev, the pages of claim
-  sources given with a quote, and the DOI lookups on Crossref and doi.org, as
-  the [security policy](SECURITY.md#security-expectations) describes.
+  sources given with a quote, the DOI lookups on Crossref and doi.org, and the
+  paper lookups on Europe PMC and OpenAlex, as the
+  [security policy](SECURITY.md#security-expectations) describes.

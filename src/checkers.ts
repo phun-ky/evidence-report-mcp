@@ -8,6 +8,13 @@ import { promisify } from 'node:util';
 import { dbtHealth } from './dbt.js';
 import { readDependencies, type Dependency } from './dependencies.js';
 import { fetchPage, normalise, pageText } from './page.js';
+import {
+  doiOf,
+  paperKey,
+  paperOf,
+  paperText,
+  type PaperText
+} from './papers.js';
 import { osvSeverity, type OsvVuln } from './severity.js';
 import type { CheckResult, Finding, Target } from './types.js';
 
@@ -444,12 +451,63 @@ export function checkC2pa(t: Of<'file'>): Promise<CheckResult> {
 
 const domainOf = (url: string) => new URL(url).hostname.replace(/^www\./, '');
 
+/** What makes a source independent: its paper, or else its domain (decided on #84). */
+function sourceKey(url: string): string {
+  const paper = paperOf(url);
+
+  return paper ? paperKey(paper) : domainOf(url);
+}
+
+type SourceText = { key: string; page: string } | PaperText;
+
+/** A source's text: a paper's from Europe PMC or OpenAlex when they have it, otherwise the page's. */
+async function read(url: string): Promise<SourceText> {
+  const paper = paperOf(url);
+  const text = paper && (await paperText(paper, AbortSignal.timeout(30_000)));
+
+  if (text) return text;
+
+  return { key: sourceKey(url), page: pageText(await fetchPage(url)) };
+}
+
+const PAGE_MISSING =
+  'Quote not found in the page text. The page may also build its text with JavaScript, or be behind a paywall';
+
+/** Whether a source's text has the quote (normalised), and the finding's message. */
+function match(t: SourceText, q: string): { found: boolean; message: string } {
+  if ('page' in t)
+    return normalise(t.page).includes(q)
+      ? { found: true, message: 'Quote found' }
+      : { found: false, message: PAGE_MISSING };
+
+  if (normalise(t.abstract).includes(q))
+    return {
+      found: true,
+      message: `Quote found in the paper's abstract (${t.from})`
+    };
+
+  if (t.fullText && normalise(t.fullText).includes(q))
+    return {
+      found: true,
+      message: `Quote found in the paper's open-access full text (${t.from})`
+    };
+
+  return {
+    found: false,
+    message: t.fullText
+      ? `Quote not found in the paper's abstract or open-access full text (${t.from})`
+      : `Quote not found in the paper's abstract (${t.from}). Its full text isn't open, so only the abstract was searched`
+  };
+}
+
 /**
  * Heuristic by design: it never asks a language model whether the claim is
  * "plausible", which would be the generator grading its own homework. It
  * checks that each quoted source says what the agent quotes, and that the
- * sources come from at least two domains. Even a pass leaves the verdict
- * "unknown": a quote on a page shows the page says it, not that it is true.
+ * sources are independent: two domains, or two papers. A paper is read from
+ * Europe PMC or OpenAlex, not its publisher's page. Even a pass leaves the
+ * verdict "unknown": a quote in a source shows the source says it, not that
+ * it is true.
  */
 export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
   return timed(
@@ -462,16 +520,16 @@ export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
       const sources = t.sources.map((s) =>
         typeof s === 'string' ? { url: s } : s
       );
-      const domains = new Set(sources.map((s) => domainOf(s.url)));
+      const keys = new Set(sources.map((s) => sourceKey(s.url)));
 
-      if (domains.size < 2) {
+      if (keys.size < 2) {
         return {
           status: 'fail',
-          reason: 'Fewer than two independent source domains',
+          reason: 'Fewer than two independent sources',
           findings: [
             {
               severity: 'medium',
-              message: `Only ${domains.size} distinct source domain(s)`
+              message: `Only ${keys.size} independent source(s): each domain, or each paper, counts once`
             }
           ]
         };
@@ -493,39 +551,40 @@ export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
       let missing = 0;
       let unfetched = 0;
 
-      // Pages are fetched together; each settles on its own, so one failure can't hide the others
-      const pages = await Promise.allSettled(
-        quoted.map((s) => fetchPage(s.url))
-      );
+      // Sources are read together; each settles on its own, so one failure can't hide the others
+      const texts = await Promise.allSettled(quoted.map((s) => read(s.url)));
 
-      pages.forEach((page, i) => {
+      texts.forEach((text, i) => {
         const { url, quote } = quoted[i]!;
+        const q = normalise(quote);
 
-        if (page.status === 'rejected') {
+        if (text.status === 'rejected') {
           unfetched++;
           findings.push({
             severity: 'info',
-            message: `Not fetched: ${(page.reason as Error).message}`,
+            message: `Not fetched: ${(text.reason as Error).message}`,
             ref: url
           });
-        } else if (normalise(pageText(page.value)).includes(normalise(quote))) {
-          found.add(domainOf(url));
-          findings.push({ severity: 'info', message: 'Quote found', ref: url });
-        } else {
-          missing++;
-          findings.push({
-            severity: 'medium',
-            message:
-              'Quote not found in the page text. The page may also build its text with JavaScript, or be behind a paywall',
-            ref: url
-          });
+
+          return;
         }
+
+        const m = match(text.value, q);
+
+        if (m.found) found.add(text.value.key);
+        else missing++;
+
+        findings.push({
+          severity: m.found ? 'info' : 'medium',
+          message: m.message,
+          ref: url
+        });
       });
 
       if (missing)
         return {
           status: 'fail',
-          reason: `${missing} quote(s) not found on their pages`,
+          reason: `${missing} quote(s) not found in their sources`,
           findings
         };
 
@@ -539,7 +598,7 @@ export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
       if (found.size < 2)
         return {
           status: 'skipped',
-          reason: 'Quotes found on fewer than two independent domains',
+          reason: 'Quotes found in fewer than two independent sources',
           findings
         };
 
@@ -549,25 +608,6 @@ export function checkCorroboration(t: Of<'claim'>): Promise<CheckResult> {
 }
 
 /* ---------------- claim: retracted sources (Crossref) ---------------- */
-
-const DOI_HOSTS = new Set(['doi.org', 'dx.doi.org', 'www.doi.org']);
-
-/** The DOI in a doi.org link, lower-cased (DOIs ignore case), or undefined for any other URL (decided on #83). */
-export function doiOf(url: string): string | undefined {
-  const u = new URL(url);
-
-  if (!DOI_HOSTS.has(u.hostname)) return undefined;
-
-  let doi: string;
-
-  try {
-    doi = decodeURIComponent(u.pathname.slice(1));
-  } catch {
-    return undefined;
-  }
-
-  return /^10\.\d{4,9}\/\S+$/.test(doi) ? doi.toLowerCase() : undefined;
-}
 
 interface CrossrefUpdate {
   DOI?: string;
@@ -800,7 +840,8 @@ export function plan(t: Target): Plan {
           'Whether the cited sources are themselves reliable, beyond retractions recorded in Crossref',
           'Retractions of papers not given as a doi.org link, or registered outside Crossref',
           'Whether a quote that was found supports the claim as worded',
-          'Sources given without a quote, and text a page builds with JavaScript'
+          'Sources given without a quote, and text a page builds with JavaScript',
+          "Papers' paywalled full texts: only the abstract, or an open-access full text, is searched"
         ]
       };
   }

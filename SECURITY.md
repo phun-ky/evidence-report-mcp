@@ -62,11 +62,11 @@ What you can rely on:
   file at a `dependencies` target's `path`, and the dbt artifacts in
   `EVIDENCE_REPORT_MCP_DBT_TARGET`. The only process it starts is `c2patool`,
   with the `trust` subcommand, which reads the file and writes nothing.
-- **Three kinds of network destination.** For a `package` target the server
-  sends the package name, ecosystem and version to
-  `https://api.osv.dev/v1/query`, with at most 10 pages of results. For a
-  `dependencies` target it sends each package's name and version, or its purl,
-  to `https://api.osv.dev/v1/querybatch`, and the id of each advisory found to
+- **Four kinds of network destination.** For a `package` target the server sends
+  the package name, ecosystem and version to `https://api.osv.dev/v1/query`,
+  with at most 10 pages of results. For a `dependencies` target it sends each
+  package's name and version, or its purl, to
+  `https://api.osv.dev/v1/querybatch`, and the id of each advisory found to
   `https://api.osv.dev/v1/vulns/{id}`. Every request has a 10 second timeout.
   For a `claim` target, each source given with a `quote` is fetched with a GET:
   `https` only, only hosts whose every address is public (checked when the
@@ -77,7 +77,13 @@ What you can rely on:
   `claim` target, the DOI of each source given as a `doi.org` link is sent to
   `https://api.crossref.org/works/{doi}`, and to `https://doi.org/ra/{doi}` only
   when Crossref doesn't know it: one request at a time, 30 seconds in all, with
-  the same user agent and no contact details. Nothing else is sent anywhere, and
+  the same user agent and no contact details. For a `claim` source that is a
+  research paper (a `doi.org`, PubMed, PMC or Europe PMC link) and has a quote,
+  its DOI, PubMed id or PMC id is sent to Europe PMC's REST API
+  (`https://www.ebi.ac.uk/europepmc/webservices/rest/`, the search and, for an
+  open-access paper, its full text), and a DOI that Europe PMC has no text for
+  to `https://api.openalex.org/works/doi:{doi}`: 30 seconds a paper, the same
+  user agent, no key and no contact details. Nothing else is sent anywhere, and
   JSON Schema `$ref`s are never loaded from the network.
 - **No listening port.** The server talks to its client over stdio only.
 - **No data collection.** There is no telemetry.
