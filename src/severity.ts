@@ -15,8 +15,11 @@ const LABELS: Record<string, Severity | undefined> = {
   high: 'high',
   critical: 'critical'
 };
+/** Own keys only, so `toString`, `constructor` or `__proto__` never match Object.prototype. */
+const lookup = <T>(table: Record<string, T | undefined>, key: unknown) =>
+  typeof key === 'string' && Object.hasOwn(table, key) ? table[key] : undefined;
 const fromLabel = (label: unknown): Severity | undefined =>
-  typeof label === 'string' ? LABELS[label.toLowerCase()] : undefined;
+  typeof label === 'string' ? lookup(LABELS, label.toLowerCase()) : undefined;
 
 /** CVSS qualitative rating scale. */
 export function fromScore(score: number): Severity {
@@ -58,17 +61,18 @@ export function cvss3BaseScore(vector: string): number | undefined {
   if (m.S !== 'U' && m.S !== 'C') return undefined;
 
   const changed = m.S === 'C';
-  const pr = (
-    { N: 0.85, L: changed ? 0.68 : 0.62, H: changed ? 0.5 : 0.27 } as Weights
-  )[m.PR ?? ''];
+  const pr = lookup<number>(
+    { N: 0.85, L: changed ? 0.68 : 0.62, H: changed ? 0.5 : 0.27 },
+    m.PR
+  );
   const w = [
-    AV[m.AV ?? ''],
-    AC[m.AC ?? ''],
+    lookup(AV, m.AV),
+    lookup(AC, m.AC),
     pr,
-    UI[m.UI ?? ''],
-    CIA[m.C ?? ''],
-    CIA[m.I ?? ''],
-    CIA[m.A ?? '']
+    lookup(UI, m.UI),
+    lookup(CIA, m.C),
+    lookup(CIA, m.I),
+    lookup(CIA, m.A)
   ];
 
   if (w.some((x) => x === undefined)) return undefined;

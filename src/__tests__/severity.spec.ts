@@ -22,6 +22,10 @@ test('cvss3BaseScore: CVSS 4, CVSS 2 and malformed vectors -> undefined', () => 
     'CVSS:3.1/AV:X/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
     'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/C:H/I:H/A:H',
     'CVSS:3.1/S:U',
+    // Names inherited from Object.prototype are not metric values
+    'CVSS:3.0/AV:P/AC:H/PR:H/UI:R/C:N/I:N/A:valueOf/S:U',
+    'CVSS:3.1/AV:toString/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
+    'CVSS:3.1/AV:N/AC:L/PR:constructor/UI:N/S:C/C:H/I:H/A:H',
     ''
   ]) {
     assert.equal(cvss3BaseScore(v), undefined, v);
@@ -91,4 +95,14 @@ test('osvSeverity: nothing usable -> undefined (caller decides the fallback)', (
     }),
     undefined
   );
+});
+
+test('osvSeverity: labels inherited from Object.prototype are ignored', () => {
+  for (const severity of ['__proto__', 'constructor', 'toString']) {
+    assert.equal(
+      osvSeverity({ id: 'x', affected: [{ database_specific: { severity } }] }),
+      undefined,
+      severity
+    );
+  }
 });
