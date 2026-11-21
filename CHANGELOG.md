@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0](https://github.com/phun-ky/evidence-report-mcp/compare/0.6.2...0.7.0) (2026-11-21)
+
+### Feature
+
+* 🎸 fail claims whose doi.org sources are retracted, under concern or don't exist ([aeab111](https://github.com/phun-ky/evidence-report-mcp/commit/aeab111d8c21887afb996f861ee7dd8f49650281)), closes [#83](https://github.com/phun-ky/evidence-report-mcp/issues/83)
+
 ## [0.6.2](https://github.com/phun-ky/evidence-report-mcp/compare/0.6.1...0.6.2) (2026-11-21)
 
 ### Documentation
