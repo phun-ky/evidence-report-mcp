@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.2](https://github.com/phun-ky/evidence-report-mcp/compare/0.6.1...0.6.2) (2026-11-21)
+
+### Documentation
+
+* ✏️ add [#83](https://github.com/phun-ky/evidence-report-mcp/issues/83), [#84](https://github.com/phun-ky/evidence-report-mcp/issues/84) and [#85](https://github.com/phun-ky/evidence-report-mcp/issues/85) to the roadmap's considered ideas ([8740293](https://github.com/phun-ky/evidence-report-mcp/commit/8740293159796ad8e8bed2f28f8da4919774d98e))
+* ✏️ name the claim source pages among the roadmap's outside calls ([44165be](https://github.com/phun-ky/evidence-report-mcp/commit/44165bea25f7a3b7f94d0b8dc1fd88783ea3a858))
+
+### Bug
+
+* 🐛 find quotes across entities, soft hyphens, charsets, inline tags and footnote markers ([e652f1f](https://github.com/phun-ky/evidence-report-mcp/commit/e652f1fc1079d0aa82e7636ae44ca35ba5d1b7d2)), closes [#88](https://github.com/phun-ky/evidence-report-mcp/issues/88), references [#85](https://github.com/phun-ky/evidence-report-mcp/issues/85)
+* 🐛 leave no < in page text once inline tags are removed ([e5eb638](https://github.com/phun-ky/evidence-report-mcp/commit/e5eb638ce064bc0af519f20ef55c73360ac90da2)), references [#88](https://github.com/phun-ky/evidence-report-mcp/issues/88)
+* 🐛 mark inline tags, and remove the mark in its own pass ([2b9532f](https://github.com/phun-ky/evidence-report-mcp/commit/2b9532f2a5420e260a325a80e43aafa66ae062e3)), references [#88](https://github.com/phun-ky/evidence-report-mcp/issues/88)
+* 🐛 replace a lone < in the same pass as tags ([5242293](https://github.com/phun-ky/evidence-report-mcp/commit/5242293f6e0c5fdf2c9a1d14508a9f461409f8e2)), references [#88](https://github.com/phun-ky/evidence-report-mcp/issues/88)
+
 ## [0.6.1](https://github.com/phun-ky/evidence-report-mcp/compare/0.6.0...0.6.1) (2026-11-21)
 
 ### Tasks

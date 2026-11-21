@@ -1,6 +1,6 @@
 {
   "name": "evidence-report-mcp",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "An MCP server with one verify tool: agents call it before acting on data they did not produce, and get an evidence report back, not a yes or no.",
   "keywords": [
     "mcp",
