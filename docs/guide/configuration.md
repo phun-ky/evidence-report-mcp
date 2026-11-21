@@ -71,8 +71,9 @@ passes.
   package's ecosystem, name and version, and `https://api.osv.dev/v1/querybatch`
   and `https://api.osv.dev/v1/vulns/{id}` for the packages in a lockfile or
   SBOM; the pages of claim sources given with a quote, over `https` and only on
-  public addresses; and Crossref and `doi.org` for the DOIs of claim sources
-  given as `doi.org` links (see
+  public addresses; Crossref and `doi.org` for the DOIs of claim sources given
+  as `doi.org` links; and Europe PMC and OpenAlex for the text of claim sources
+  that are research papers (see
   [the claim check](./checks/claim#what-it-fetches)).
 - **Files:** only the path of a file target, read by `c2patool`; the path of a
   lockfile or SBOM; and the dbt artifacts in `EVIDENCE_REPORT_MCP_DBT_TARGET`.

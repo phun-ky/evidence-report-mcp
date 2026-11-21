@@ -27,9 +27,12 @@ A heuristic check. It does not ask a language model whether the claim sounds
 plausible: that would be the generator grading its own work. It checks that each
 source says what the agent quotes from it.
 
-- Sources from fewer than two distinct domains (`www.` is ignored):
-  <span class="verdict fail">fail</span>, with a `medium` finding such as
-  `Only 1 distinct source domain(s)`. Nothing is fetched.
+- Fewer than two independent sources: <span class="verdict fail">fail</span>,
+  with a `medium` finding such as
+  `Only 1 independent source(s): each domain, or each paper, counts once`.
+  Nothing is fetched. Each domain counts once (`www.` is ignored), and so does
+  each paper, however it is linked: two papers on `doi.org` are two sources, and
+  one paper on `doi.org` and on PubMed is one.
 - No source has a quote: `skipped`. A plain URL is not fetched.
 - Each quoted page is fetched, and its text (without scripts, styles and markup)
   is searched for the quote. The text is read roughly as a browser shows it: an
@@ -42,14 +45,24 @@ source says what the agent quotes from it.
   `medium` finding whose `ref` is the URL. A page that builds its text with
   JavaScript, or sits behind a paywall, also fails, and the finding says so: an
   agent should not rely on a source it can't show says what it quotes.
-- A page that can't be fetched: `skipped`, with an `info` finding that says why.
-- Quotes found on fewer than two distinct domains: `skipped`.
-- Every quote found, on at least two distinct domains: `pass`, with an `info`
-  finding for each page.
+- A research paper, given as a `doi.org`, PubMed, PMC or Europe PMC link, is not
+  read from its publisher's page, which is often behind a paywall. Its abstract,
+  and its full text when it is open access, come from
+  [Europe PMC](https://europepmc.org); for a `doi.org` link that Europe PMC has
+  no text for, such as an arXiv paper, the abstract comes from
+  [OpenAlex](https://openalex.org). The finding says where the quote was found.
+  A quote not in what could be searched: <span class="verdict fail">fail</span>,
+  as for a page, and the finding says when only the abstract was searched. When
+  neither has the paper's text, its link is fetched as a page.
+- A source that can't be fetched: `skipped`, with an `info` finding that says
+  why.
+- Quotes found in fewer than two independent sources: `skipped`.
+- Every quote found, in at least two independent sources: `pass`, with an `info`
+  finding for each source.
 
 Even then the claim's verdict is <span class="verdict unknown">unknown</span>: a
 heuristic can fail a target, but never pass one on its own. A quote on a page
-shows that the page says it, not that it is true.
+shows that the page or paper says it, not that it is true.
 
 ## The check: `claim.retractions`
 
@@ -90,6 +103,14 @@ is decoded with the charset in its `content-type` header, or else in a `<meta>`
 in its first 1,024 bytes, or else as UTF-8. No cookies are sent, and the user
 agent is `evidence-report-mcp`.
 
+For a paper, `claim.corroboration` sends its DOI, PubMed id or PMC id to Europe
+PMC's search (`https://www.ebi.ac.uk/europepmc/webservices/rest/search`), and
+fetches an open-access full text from
+`https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTextXML`. Only for
+a DOI that Europe PMC has no text for does it ask OpenAlex
+(`https://api.openalex.org/works/doi:{doi}`), without a key. Each paper may take
+30 seconds, and the user agent is `evidence-report-mcp`.
+
 For `claim.retractions`, each DOI is sent to
 `https://api.crossref.org/works/{doi}` and, only when Crossref doesn't know it,
 to `https://doi.org/ra/{doi}`. The lookups run one at a time, as Crossref's
@@ -105,3 +126,5 @@ public API asks, within 30 seconds in all. The user agent is
   Crossref
 - Whether a quote that was found supports the claim as worded
 - Sources given without a quote, and text a page builds with JavaScript
+- Papers' paywalled full texts: only the abstract, or an open-access full text,
+  is searched

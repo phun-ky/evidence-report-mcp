@@ -13,9 +13,9 @@ import {
   checkOsv,
   checkRetractions,
   checkSchema,
-  doiOf,
   plan
 } from '../checkers.js';
+import { doiOf } from '../papers.js';
 import { mockHttps } from '../test/https.js';
 import type { Target } from '../types.js';
 
@@ -405,6 +405,32 @@ test('checkCorroboration: one distinct domain (www. ignored) -> heuristic fail',
 
   assert.equal(r.kind, 'heuristic');
   assert.equal(r.status, 'fail');
+  assert.equal(r.reason, 'Fewer than two independent sources');
+  assert.deepEqual(r.findings, [
+    {
+      severity: 'medium',
+      message:
+        'Only 1 independent source(s): each domain, or each paper, counts once'
+    }
+  ]);
+});
+
+test('checkCorroboration: each paper counts once, however it is linked; two papers on doi.org are two', async () => {
+  const one = await checkCorroboration({
+    kind: 'claim',
+    text: 'x',
+    sources: ['https://doi.org/10.1234/A', 'https://dx.doi.org/10.1234/a']
+  });
+
+  assert.equal(one.status, 'fail');
+
+  const two = await checkCorroboration({
+    kind: 'claim',
+    text: 'x',
+    sources: ['https://doi.org/10.1234/a', 'https://doi.org/10.1234/b']
+  });
+
+  assert.equal(two.status, 'skipped');
 });
 
 test('checkCorroboration: two domains -> skipped, never pass', async () => {
@@ -691,7 +717,7 @@ test('checkCorroboration: a quote not on its page -> fail, whatever else was fou
   );
 
   assert.equal(r.status, 'fail');
-  assert.equal(r.reason, '1 quote(s) not found on their pages');
+  assert.equal(r.reason, '1 quote(s) not found in their sources');
   assert.deepEqual(r.findings[1], {
     severity: 'medium',
     message:
@@ -729,7 +755,7 @@ test('checkCorroboration: quotes found on only one domain -> skipped; unquoted s
   );
 
   assert.equal(r.status, 'skipped');
-  assert.equal(r.reason, 'Quotes found on fewer than two independent domains');
+  assert.equal(r.reason, 'Quotes found in fewer than two independent sources');
   assert.equal(get.mock.callCount(), 1);
 });
 
@@ -1011,6 +1037,157 @@ test('verify: a claim citing a retracted paper fails, whatever its quotes', asyn
     ]
   );
   assert.equal(report.verdict, 'fail');
+});
+
+/* ---------------- claim quotes in papers (fetch and https.get mocked) ---------------- */
+
+const EPMC_API = 'https://www.ebi.ac.uk/europepmc/webservices/rest';
+const epmcSearch = (query: string) =>
+  `${EPMC_API}/search?${new URLSearchParams({ query, resultType: 'core', format: 'json', pageSize: '1' })}`;
+const record = (r: Record<string, unknown>) =>
+  Response.json({ hitCount: 1, resultList: { result: [r] } });
+const paywalled = {
+  id: '9500320',
+  source: 'MED',
+  doi: '10.1016/s0140-6736(97)11096-0',
+  abstractText:
+    '<h4>Background</h4>We investigated a consecutive series of children.',
+  isOpenAccess: 'N',
+  inEPMC: 'N'
+};
+const open = {
+  id: '16060722',
+  source: 'MED',
+  doi: '10.1371/journal.pmed.0020124',
+  pmcid: 'PMC1182327',
+  abstractText: 'There is increasing concern about research findings.',
+  isOpenAccess: 'Y',
+  inEPMC: 'Y'
+};
+const paperApis = {
+  [epmcSearch('EXT_ID:9500320 AND SRC:MED')]: () => record(paywalled),
+  [epmcSearch('DOI:"10.1016/s0140-6736(97)11096-0"')]: () => record(paywalled),
+  [epmcSearch('DOI:"10.1371/journal.pmed.0020124"')]: () => record(open),
+  [`${EPMC_API}/PMC1182327/fullTextXML`]: () =>
+    new Response(
+      '<article><body><p>Corollary 1: the <italic>smaller</italic> the studies, the less likely.</p></body></article>'
+    )
+};
+const WAKEFIELD_URL = 'https://doi.org/10.1016/S0140-6736(97)11096-0';
+const IOANNIDIS_URL = 'https://doi.org/10.1371/journal.pmed.0020124';
+
+test('checkCorroboration: quotes in two papers, from the abstract and the open full text -> heuristic pass', async () => {
+  mockLookups(paperApis);
+
+  const r = await checkCorroboration({
+    kind: 'claim',
+    text: 'x',
+    sources: [
+      { url: WAKEFIELD_URL, quote: 'a consecutive series of children' },
+      { url: IOANNIDIS_URL, quote: 'the smaller the studies' }
+    ]
+  });
+
+  assert.equal(r.status, 'pass');
+  assert.deepEqual(r.findings, [
+    {
+      severity: 'info',
+      message: "Quote found in the paper's abstract (Europe PMC)",
+      ref: WAKEFIELD_URL
+    },
+    {
+      severity: 'info',
+      message: "Quote found in the paper's open-access full text (Europe PMC)",
+      ref: IOANNIDIS_URL
+    }
+  ]);
+});
+
+test('checkCorroboration: a quote in neither the abstract nor the open text -> fail; the finding says what was searched', async () => {
+  mockLookups(paperApis);
+
+  const r = await checkCorroboration({
+    kind: 'claim',
+    text: 'x',
+    sources: [
+      { url: WAKEFIELD_URL, quote: 'MMR vaccine caused it' },
+      { url: IOANNIDIS_URL, quote: 'all findings are true' }
+    ]
+  });
+
+  assert.equal(r.status, 'fail');
+  assert.equal(r.reason, '2 quote(s) not found in their sources');
+  assert.deepEqual(
+    r.findings.map((f) => [f.severity, f.message]),
+    [
+      [
+        'medium',
+        "Quote not found in the paper's abstract (Europe PMC). Its full text isn't open, so only the abstract was searched"
+      ],
+      [
+        'medium',
+        "Quote not found in the paper's abstract or open-access full text (Europe PMC)"
+      ]
+    ]
+  );
+});
+
+test('checkCorroboration: the same paper on doi.org and PubMed counts once', async () => {
+  mockLookups(paperApis);
+
+  const r = await checkCorroboration({
+    kind: 'claim',
+    text: 'x',
+    sources: [
+      { url: WAKEFIELD_URL, quote: 'consecutive series' },
+      {
+        url: 'https://pubmed.ncbi.nlm.nih.gov/9500320/',
+        quote: 'series of children'
+      }
+    ]
+  });
+
+  assert.equal(r.status, 'skipped');
+  assert.equal(r.reason, 'Quotes found in fewer than two independent sources');
+});
+
+test('checkCorroboration: a paper neither index has text for is fetched as a page; an index error is not fetched', async () => {
+  mockLookups({
+    [epmcSearch('DOI:"10.1234/page"')]: () =>
+      Response.json({ hitCount: 0, resultList: { result: [] } }),
+    [`https://api.openalex.org/works/doi:${encodeURIComponent('10.1234/page')}`]:
+      () => new Response('', { status: 404 }),
+    [epmcSearch('EXT_ID:7 AND SRC:MED')]: () =>
+      new Response('', { status: 500 })
+  });
+  mockHttps({
+    'https://doi.org/10.1234/page': {
+      body: '<p>The bridge opened in 1894.</p>'
+    }
+  });
+
+  const r = await checkCorroboration({
+    kind: 'claim',
+    text: 'x',
+    sources: [
+      { url: 'https://doi.org/10.1234/page', quote: 'opened in 1894' },
+      { url: 'https://pubmed.ncbi.nlm.nih.gov/7/', quote: 'anything' }
+    ]
+  });
+
+  assert.equal(r.status, 'skipped');
+  assert.deepEqual(r.findings, [
+    {
+      severity: 'info',
+      message: 'Quote found',
+      ref: 'https://doi.org/10.1234/page'
+    },
+    {
+      severity: 'info',
+      message: 'Not fetched: www.ebi.ac.uk responded 500',
+      ref: 'https://pubmed.ncbi.nlm.nih.gov/7/'
+    }
+  ]);
 });
 
 /* ---------------- plan ---------------- */
