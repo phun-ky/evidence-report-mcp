@@ -27,15 +27,9 @@ first.
   property and value against Wikidata, the only way a claim could ever `pass`.
 - **More media checks:** ingredient manifests (earlier edits), which the C2PA
   check reports as not checked today.
-- **Retracted sources:** a deterministic check that fails a claim whose source
-  is a paper that Crossref records as retracted, or a DOI that doesn't exist
-  ([#83](https://github.com/phun-ky/evidence-report-mcp/issues/83)).
 - **Research papers as sources:** look for a quote in the paper's abstract or
   open-access text on Europe PMC and OpenAlex, not on a publisher page behind a
   paywall ([#84](https://github.com/phun-ky/evidence-report-mcp/issues/84)).
-- **Recorded pages in tests:** test quote matching on trimmed real pages, not
-  only on hand-written HTML
-  ([#85](https://github.com/phun-ky/evidence-report-mcp/issues/85)).
 
 ## Not planned
 
@@ -47,6 +41,6 @@ first.
 - **Acting on targets.** The server only reads: it never installs packages,
   changes data or files, or publishes anything.
 - **Collecting data.** The server keeps nothing and reports nothing back. Its
-  only outside calls are the package lookups on OSV.dev and the pages of claim
-  sources given with a quote, as the
-  [security policy](SECURITY.md#security-expectations) describes.
+  only outside calls are the package lookups on OSV.dev, the pages of claim
+  sources given with a quote, and the DOI lookups on Crossref and doi.org, as
+  the [security policy](SECURITY.md#security-expectations) describes.

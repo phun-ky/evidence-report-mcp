@@ -11,7 +11,9 @@ import {
   checkDependencies,
   checkObservability,
   checkOsv,
+  checkRetractions,
   checkSchema,
+  doiOf,
   plan
 } from '../checkers.js';
 import { mockHttps } from '../test/https.js';
@@ -744,6 +746,271 @@ test('verify: a claim whose quotes are all found is still unknown, never pass', 
 
   assert.equal(report.checks[0]!.status, 'pass');
   assert.equal(report.verdict, 'unknown');
+});
+
+/* ---------------- claim retractions (fetch mocked) ---------------- */
+
+// Trimmed from the live Crossref record of 10.1016/S0140-6736(97)11096-0 (Wakefield 1998), 2026-11-21
+const WAKEFIELD = '10.1016/s0140-6736(97)11096-0';
+const wakefieldUpdates = [
+  {
+    DOI: '10.1016/s0140-6736(04)15715-2',
+    type: 'correction',
+    label: 'Correction',
+    source: 'retraction-watch',
+    updated: { 'date-time': '2004-03-06T00:00:00Z' }
+  },
+  {
+    DOI: '10.1016/s0140-6736(10)60175-4',
+    type: 'retraction',
+    label: 'Retraction',
+    source: 'retraction-watch',
+    updated: { 'date-time': '2010-02-06T00:00:00Z' }
+  }
+];
+const works = (message: Record<string, unknown>) =>
+  Response.json({ status: 'ok', 'message-type': 'work', message });
+const crossref = (doi: string) =>
+  `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
+const ra = (doi: string) => `https://doi.org/ra/${encodeURIComponent(doi)}`;
+const papers = (...urls: string[]) =>
+  ({ kind: 'claim', text: 'A claim.', sources: urls }) as const;
+/** fetch answered by URL; anything else fails the test. Tracks requests in flight. */
+const mockLookups = (answers: Record<string, () => Response>) => {
+  const state = { inFlight: 0, most: 0 };
+  const fetch = mockFetch(async (url) => {
+    state.most = Math.max(state.most, ++state.inFlight);
+    await new Promise((r) => setTimeout(r, 1));
+    state.inFlight--;
+
+    const answer = answers[url];
+
+    if (!answer) throw new Error(`unexpected request to ${url}`);
+
+    return answer();
+  });
+
+  return { fetch, state };
+};
+
+test('doiOf: doi.org links only, lower-cased and decoded', () => {
+  assert.equal(
+    doiOf('https://doi.org/10.1016/S0140-6736(97)11096-0'),
+    WAKEFIELD
+  );
+  assert.equal(
+    doiOf('http://dx.doi.org/10.1038/nature14539'),
+    '10.1038/nature14539'
+  );
+  assert.equal(
+    doiOf('https://www.doi.org/10.1038%2Fnature14539'),
+    '10.1038/nature14539'
+  );
+  assert.equal(doiOf('https://doi.org/ra/10.1038/nature14539'), undefined);
+  assert.equal(doiOf('https://doi.org/10.1038'), undefined);
+  assert.equal(doiOf('https://doi.org/10.1038/%E0%A4%A'), undefined);
+  assert.equal(
+    doiOf('https://www.thelancet.com/doi/10.1016/S0140-6736(97)11096-0'),
+    undefined
+  );
+});
+
+test('checkRetractions: a retracted paper -> high finding, fail; corrections are info', async () => {
+  const { fetch } = mockLookups({
+    [crossref(WAKEFIELD)]: () =>
+      works({ DOI: WAKEFIELD, 'updated-by': wakefieldUpdates })
+  });
+  const r = await checkRetractions(
+    papers('https://doi.org/10.1016/S0140-6736(97)11096-0')
+  );
+
+  assert.equal(r.kind, 'deterministic');
+  assert.equal(r.status, 'fail');
+  assert.equal(
+    r.reason,
+    '1 cited paper(s) retracted, under concern or not found'
+  );
+  assert.deepEqual(r.findings, [
+    {
+      severity: 'info',
+      message:
+        'Correction on 2004-03-06, notice 10.1016/s0140-6736(04)15715-2, from Retraction Watch',
+      ref: WAKEFIELD
+    },
+    {
+      severity: 'high',
+      message:
+        'Retraction on 2010-02-06, notice 10.1016/s0140-6736(10)60175-4, from Retraction Watch',
+      ref: WAKEFIELD
+    }
+  ]);
+
+  const init = fetch.mock.calls[0]!.arguments[1] as RequestInit & {
+    headers: Record<string, string>;
+  };
+
+  assert.equal(init.headers['user-agent'], 'evidence-report-mcp');
+  assert.ok(init.signal instanceof AbortSignal);
+});
+
+test('checkRetractions: an expression of concern -> medium, fail; type names vary', async () => {
+  mockLookups({
+    [crossref('10.1234/a')]: () =>
+      works({
+        'updated-by': [
+          { type: 'expression-of-concern', source: 'publisher' },
+          { type: 'Partial_Retraction', label: 'Partial retraction' },
+          { label: 'No type: ignored' }
+        ]
+      })
+  });
+
+  const r = await checkRetractions(papers('https://doi.org/10.1234/a'));
+
+  assert.equal(r.status, 'fail');
+  assert.deepEqual(r.findings, [
+    { severity: 'medium', message: 'expression_of_concern', ref: '10.1234/a' },
+    { severity: 'high', message: 'Partial retraction', ref: '10.1234/a' }
+  ]);
+});
+
+test('checkRetractions: clean or only corrected papers -> pass, with a finding for each', async () => {
+  mockLookups({
+    [crossref('10.1234/clean')]: () => works({ DOI: '10.1234/clean' }),
+    [crossref('10.1234/odd')]: () => works({ 'updated-by': 'not a list' }),
+    [crossref('10.1234/fixed')]: () =>
+      works({ 'updated-by': [{ type: 'erratum', label: 'Erratum' }] })
+  });
+
+  const r = await checkRetractions(
+    papers(
+      'https://doi.org/10.1234/clean',
+      'https://doi.org/10.1234/odd',
+      'https://doi.org/10.1234/fixed'
+    )
+  );
+  const none = 'No retraction, withdrawal or expression of concern recorded';
+
+  assert.equal(r.status, 'pass');
+  assert.deepEqual(r.findings, [
+    { severity: 'info', message: none, ref: '10.1234/clean' },
+    { severity: 'info', message: none, ref: '10.1234/odd' },
+    { severity: 'info', message: 'Erratum', ref: '10.1234/fixed' },
+    { severity: 'info', message: none, ref: '10.1234/fixed' }
+  ]);
+});
+
+test('checkRetractions: a DOI that does not exist -> medium, fail; one registered elsewhere -> info, skipped', async () => {
+  const missing = () => new Response('Resource not found.', { status: 404 });
+
+  mockLookups({
+    [crossref('10.9999/made-up')]: missing,
+    [ra('10.9999/made-up')]: () =>
+      Response.json([{ DOI: '10.9999/made-up', status: 'DOI does not exist' }]),
+    [crossref('10.48550/arxiv.1706.03762')]: missing,
+    [ra('10.48550/arxiv.1706.03762')]: () =>
+      Response.json([{ DOI: '10.48550/arXiv.1706.03762', RA: 'DataCite' }])
+  });
+
+  const arxiv = 'https://doi.org/10.48550/arXiv.1706.03762';
+  const elsewhere = await checkRetractions(papers(arxiv));
+
+  assert.equal(elsewhere.status, 'skipped');
+  assert.equal(elsewhere.reason, '1 DOI(s) not in Crossref');
+  assert.deepEqual(elsewhere.findings, [
+    {
+      severity: 'info',
+      message:
+        'Not in Crossref (registered with DataCite): not checked for retractions',
+      ref: '10.48550/arxiv.1706.03762'
+    }
+  ]);
+
+  const madeUp = await checkRetractions(
+    papers(arxiv, 'https://doi.org/10.9999/made-up')
+  );
+
+  assert.equal(madeUp.status, 'fail');
+  assert.deepEqual(madeUp.findings[1], {
+    severity: 'medium',
+    message: 'No such DOI: doi.org does not know it',
+    ref: '10.9999/made-up'
+  });
+});
+
+test('checkRetractions: no DOI sources -> skipped, nothing fetched', async () => {
+  const { fetch } = mockLookups({});
+  const r = await checkRetractions(
+    papers('https://a.example/', 'https://www.thelancet.com/doi/10.1016/x')
+  );
+
+  assert.equal(r.status, 'skipped');
+  assert.equal(
+    r.reason,
+    'No DOI sources: give papers as https://doi.org/ links'
+  );
+  assert.equal(fetch.mock.callCount(), 0);
+});
+
+test('checkRetractions: one lookup per DOI, one at a time', async () => {
+  const { fetch, state } = mockLookups({
+    [crossref('10.1234/a')]: () => works({}),
+    [crossref('10.1234/b')]: () => works({})
+  });
+  const r = await checkRetractions({
+    kind: 'claim',
+    text: 'A claim.',
+    sources: [
+      'https://doi.org/10.1234/A',
+      { url: 'https://dx.doi.org/10.1234/a', quote: 'q' },
+      'https://doi.org/10.1234/b'
+    ]
+  });
+
+  assert.equal(r.status, 'pass');
+  assert.equal(fetch.mock.callCount(), 2);
+  assert.equal(state.most, 1);
+});
+
+test('checkRetractions: Crossref or doi.org errors -> error (fail closed)', async () => {
+  mockLookups({
+    [crossref('10.1234/down')]: () => new Response('', { status: 503 }),
+    [crossref('10.1234/gone')]: () => new Response('', { status: 404 }),
+    [ra('10.1234/gone')]: () => new Response('', { status: 500 })
+  });
+
+  const down = await checkRetractions(papers('https://doi.org/10.1234/down'));
+
+  assert.equal(down.status, 'error');
+  assert.equal(down.reason, 'Crossref responded 503');
+
+  const gone = await checkRetractions(papers('https://doi.org/10.1234/gone'));
+
+  assert.equal(gone.status, 'error');
+  assert.equal(gone.reason, 'doi.org responded 500');
+});
+
+test('verify: a claim citing a retracted paper fails, whatever its quotes', async () => {
+  mockLookups({
+    [crossref(WAKEFIELD)]: () => works({ 'updated-by': wakefieldUpdates })
+  });
+
+  const { verify } = await import('../server.js');
+  const report = await verify(
+    papers(
+      'https://doi.org/10.1016/S0140-6736(97)11096-0',
+      'https://a.example/'
+    )
+  );
+
+  assert.deepEqual(
+    report.checks.map((c) => [c.id, c.status]),
+    [
+      ['claim.corroboration', 'skipped'],
+      ['claim.retractions', 'fail']
+    ]
+  );
+  assert.equal(report.verdict, 'fail');
 });
 
 /* ---------------- plan ---------------- */

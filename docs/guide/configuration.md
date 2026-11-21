@@ -67,11 +67,13 @@ passes.
 
 ## What it reaches
 
-- **Network:** only OSV.dev: `https://api.osv.dev/v1/query` for a package's
-  ecosystem, name and version, and `https://api.osv.dev/v1/querybatch` and
-  `https://api.osv.dev/v1/vulns/{id}` for the packages in a lockfile or SBOM;
-  and the pages of claim sources given with a quote, over `https` and only on
-  public addresses (see [the claim check](./checks/claim#what-it-fetches)).
+- **Network:** only these. OSV.dev: `https://api.osv.dev/v1/query` for a
+  package's ecosystem, name and version, and `https://api.osv.dev/v1/querybatch`
+  and `https://api.osv.dev/v1/vulns/{id}` for the packages in a lockfile or
+  SBOM; the pages of claim sources given with a quote, over `https` and only on
+  public addresses; and Crossref and `doi.org` for the DOIs of claim sources
+  given as `doi.org` links (see
+  [the claim check](./checks/claim#what-it-fetches)).
 - **Files:** only the path of a file target, read by `c2patool`; the path of a
   lockfile or SBOM; and the dbt artifacts in `EVIDENCE_REPORT_MCP_DBT_TARGET`.
   The server can read any file its process can, so run it with no more rights
