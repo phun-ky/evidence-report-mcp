@@ -32,8 +32,12 @@ source says what the agent quotes from it.
   `Only 1 distinct source domain(s)`. Nothing is fetched.
 - No source has a quote: `skipped`. A plain URL is not fetched.
 - Each quoted page is fetched, and its text (without scripts, styles and markup)
-  is searched for the quote. Case, runs of spaces, curly and straight quotes and
-  hyphens and dashes are treated alike.
+  is searched for the quote. The text is read roughly as a browser shows it: an
+  inline tag such as a link or `<b>` joins the text either side, other tags
+  separate it, and a footnote marker in square brackets in a `<sup>`, such as
+  `[1]`, is dropped. Case, runs of spaces, curly and straight quotes and hyphens
+  and dashes are treated alike, and soft hyphens and zero-width characters are
+  ignored.
 - A quote not in its page's text: <span class="verdict fail">fail</span>, with a
   `medium` finding whose `ref` is the URL. A page that builds its text with
   JavaScript, or sits behind a paywall, also fails, and the finding says so: an
@@ -53,8 +57,10 @@ Only `https` pages on public addresses: the host is resolved when the connection
 is made, and a host with any private, loopback, link-local or otherwise
 non-public address is refused, so a source can't reach the machine or network
 the server runs in. Redirects are followed only to `https` and public addresses,
-at most 5. Each page may take 10 seconds and 2 MB, must be text or HTML, and is
-read as UTF-8. No cookies are sent, and the user agent is `evidence-report-mcp`.
+at most 5. Each page may take 10 seconds and 2 MB, and must be text or HTML. It
+is decoded with the charset in its `content-type` header, or else in a `<meta>`
+in its first 1,024 bytes, or else as UTF-8. No cookies are sent, and the user
+agent is `evidence-report-mcp`.
 
 ## Not checked
 
