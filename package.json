@@ -73,6 +73,7 @@
     "check:site": "node scripts/check-site.mjs",
     "test:site": "node --test scripts/__tests__/check-site.test.mjs",
     "render:logo": "node scripts/render-logo.mjs",
+    "banners": "node scripts/banners/render.mjs",
     "release": "release-it",
     "release:dry-run": ".github/scripts/should-release.sh && release-it --ci --dry-run --github.release=false --no-git.requireCleanWorkingDir --no-git.requireUpstream"
   },
