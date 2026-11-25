@@ -92,7 +92,7 @@
     "eslint": "10.15.0",
     "eslint-config-phun-ky": "3.0.0",
     "fast-check": "4.10.3",
-    "prettier": "3.9.10",
+    "prettier": "3.10.0",
     "publint": "0.3.25",
     "release-it": "21.1.2",
     "tsx": "4.23.15",
